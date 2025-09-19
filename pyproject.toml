@@ -1,0 +1,11 @@
+[project]
+name = "aicomp-mmlm"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "lightning>=2.5.5",
+    "pandas>=2.3.2",
+    "torch>=2.8.0",
+]
