@@ -2,11 +2,6 @@
 
 Solving the Kaggle competition "March Machine Learning Madness 2025"
 
-| Authors                                           |
-|---------------------------------------------------|
-| [Luca Kyburz](https://github.com/V8-Luky)         |
-| [Dave Schurtenberger](https://github.com/d-sbrgr) | 
-
 ---
 
 ## Setup
