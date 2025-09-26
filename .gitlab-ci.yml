@@ -1,27 +1,24 @@
+spec:
+    inputs:
+        filename:
+            description: "Filename for the submission CSV"
+            type: string
+            default: default
+
 ---
-image: astral/uv:python3.12-bookworm-slim
-
 variables:
-    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    SUBMISSION_DIR: "submissions"
+    COMPETITION: "march-machine-learning-mania-2025"
 
-# Pip's cache doesn't store the python packages
-# https://pip.pypa.io/en/stable/topics/caching/
-#
-# If you want to also cache the installed packages, you have to install
-# them in a virtualenv and cache it as well.
-cache:
-    paths:
-        - .cache/pip
-        - .venv/
-
-
-before_script:
-    - uv sync
-
-stages:
-    - dummy
-
-dummy_job:
-    stage: dummy
+submit_to_kaggle:
+    image: python:3.12
+    when: manual
+    before_script:
+        - pip install kaggle
+        - mkdir -p ~/.kaggle
+        - echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
+        - chmod 600 ~/.kaggle/kaggle.json
     script:
-        - echo "Hello world"
+        - FILE="$SUBMISSION_DIR/$[[ inputs.filename ]]"
+        - echo "Submitting $FILE to Kaggle..."
+        - kaggle competitions submit -c $COMPETITION -f "$FILE" -m "Automated GitLab submission"
