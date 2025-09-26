@@ -1,5 +1,5 @@
 ---
-image: python:3.11.9-bullseye
+image: astral/uv:python3.12-bookworm-slim
 
 variables:
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
@@ -12,31 +12,16 @@ variables:
 cache:
     paths:
         - .cache/pip
-        - venv/
+        - .venv/
 
 
 before_script:
-    - pip install --upgrade pip
-    - pip install -r requirements_ci.txt
+    - uv sync
 
 stages:
-    - test
+    - dummy
 
-test_code:
-    stage: test
+dummy_job:
+    stage: dummy
     script:
-        - coverage run -m pytest tests --junitxml=report.xml --ignore=tests/integration_tests
-        - coverage report --include=src/* --omit=tmp/*
-        - coverage xml --include=src/* --omit=tmp/*
-    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
-    artifacts:
-        when: always
-        paths:
-            - ./*.xml
-        reports:
-            junit: report.xml
-            coverage_report:
-                coverage_format: cobertura
-                path: coverage.xml
-    cache:
-        untracked: false
+        - echo "Hello world"

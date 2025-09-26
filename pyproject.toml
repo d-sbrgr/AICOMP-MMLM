@@ -1,23 +1,16 @@
 [project]
-name = "code"
-description = "Test project for the AICOMP module"
+name = "aicomp-mmlm"
 version = "0.1.0"
+description = "Solving the March Machine Learning Mania 2025 Kaggle competition"
+readme = "README.md"
+requires-python = ">=3.12"
 authors = [
-    {name = "Pascal Baumann", email = "pascal.baumann@hslu.ch"},
+    {name = "Luca Kyburz", email = "luca.kyburz@stud.hslu.ch"},
+    {name = "Dave Schurtenberger", email = "david.schurtenberger@stud.hslu.ch"},
 ]
-
-[tool.black]
-include = '\.pyi?$'
-
-[tool.isort]
-profile = "black"
-skip_gitignore=true
-py_version=39
-default_section = "THIRDPARTY"
-known_thirdparty=["wandb"]
-
-[tool.pytest.ini_options]
-# Set true to see logger ouput in test command line window
-log_cli = false
-log_cli_level = "INFO"
-log_cli_format = "%(time)s :: %(name)s :: %(message)s"
+dependencies = [
+    "pandas>=2.3.2",
+    "matplotlib>=3.8.0",
+    "numpy>=1.26.4",
+    "seaborn>=0.13.2",
+]
