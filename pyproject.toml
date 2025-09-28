@@ -14,3 +14,9 @@ dependencies = [
     "numpy>=1.26.4",
     "seaborn>=0.13.2",
 ]
+
+[project.optional-dependencies]
+notebooks = [
+    "jupyterlab>=4.4.9",
+    "notebook>=7.4.7",
+]
