@@ -6,11 +6,9 @@ from ..utils import get_data_directory, Gender
 
 
 def _load_teams_data(year: int, gender: Gender) -> pd.DataFrame:
-    df_teams = pd.read_csv(get_data_directory() / f"{gender.value}Teams.csv")
-    if all(column in df_teams.columns for column in ('FirstD1Season', 'LastD1Season')):
-        # Only keep teams that were in Division 1 in the given year
-        df_teams = df_teams[(df_teams['FirstD1Season'] <= year) & (df_teams['LastD1Season'] >= year)]
-    return df_teams[['TeamID',]]
+    df_teams = pd.read_csv(get_data_directory() / f"{gender.value}RegularSeasonCompactResults.csv")
+    df_teams = df_teams[df_teams['Season'] == year]
+    return pd.DataFrame({'TeamID': sorted(pd.unique(df_teams[['WTeamID', 'LTeamID']].values.ravel()))})
 
 
 def _create_matchups(df_teams):
