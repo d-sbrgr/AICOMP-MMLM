@@ -1,19 +1,15 @@
-import glob
-import logging
-import os
-from pathlib import Path
+__all__ = [
+    "Model",
+    "RandomModel",
+    "SeedRatioModel",
+    "PointRatioModel",
+    "HeadToHeadModel",
+    "WinRatioModel",
+]
 
-from src.utils.utils import initialise_logging_config
-
-from ..utils.load_modules import load_modules
-
-initialise_logging_config()
-logging.getLogger("root").info("Initialising Models")
-
-
-src_name = Path(__file__).resolve().parent.parent.stem
-module_path = f"{src_name}.models." + "{}"
-load_modules(
-    module_files=glob.glob(os.path.join(os.path.dirname(__file__), "*.py")),
-    module_path=module_path,
-)
+from .model import Model
+from .random_model import RandomModel
+from .seed_ratio_model import SeedRatioModel
+from .point_ratio_model import PointRatioModel
+from .win_ratio_model import WinRatioModel
+from .head_to_head_model import HeadToHeadModel

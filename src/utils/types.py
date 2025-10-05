@@ -4,6 +4,7 @@ from enum import Enum
 class Gender(Enum):
     MEN = "M"
     WOMEN = "W"
+    BOTH = ""
 
 
 class Location(Enum):
