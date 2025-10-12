@@ -16,3 +16,5 @@ class Columns:
     SCORE = "Score"
     WSCORE = f"W{SCORE}"
     LSCORE = f"L{SCORE}"
+    WELO = "WElo"
+    LELO = "LElo"
