@@ -11,6 +11,7 @@ from ..datasets.datasets import (
     compact_tourney_results
 )
 
+
 @dataclass
 class EloConfig:
     """
@@ -43,10 +44,6 @@ class RunConfig:
     min_regular_season: int | None = None
 
 
-def _prediction(elo_a: float, elo_b: float) -> float:
-    return 1.0 / (1.0 + 10 ** ((elo_b - elo_a) / 400.0))
-
-
 def _initialize_elos(teams: Iterable[int], base: float) -> dict[int, float]:
     return {int(t): base for t in teams}
 
@@ -56,6 +53,7 @@ def _season_carryover(prev_elos: dict[int, float], cfg: EloConfig) -> dict[int, 
     for tid, elo in prev_elos.items():
         next_elos[tid] = (cfg.carry * elo) + (1.0 - cfg.carry) * cfg.base
     return next_elos
+
 
 def calculate_elo(rcfg: RunConfig, ecfg: EloConfig, include_predictions: bool = False) -> tuple[pd.DataFrame, dict[int, float]]:
     """"
@@ -115,7 +113,7 @@ def calculate_elo(rcfg: RunConfig, ecfg: EloConfig, include_predictions: bool = 
         w, l = int(row.WTeamID), int(row.LTeamID)
 
         w_elo, l_elo = elos.get(w, ecfg.base), elos.get(l, ecfg.base)
-        p_win = _prediction(w_elo, l_elo)
+        p_win = predict_win(w_elo, l_elo)
         preds.append(p_win)
         w_elos.append(w_elo)
         l_elos.append(l_elo)
@@ -134,3 +132,7 @@ def calculate_elo(rcfg: RunConfig, ecfg: EloConfig, include_predictions: bool = 
     if include_predictions:
         df_elo[Columns.PRED] = preds
     return df_elo, elos
+
+
+def predict_win(elo_a: float, elo_b: float) -> float:
+    return 1.0 / (1.0 + 10 ** ((elo_b - elo_a) / 400.0))
