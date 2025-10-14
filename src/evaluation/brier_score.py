@@ -49,6 +49,10 @@ def _combine_data(df_tourney: pd.DataFrame, df_submission: pd.DataFrame) -> pd.D
     return df_merged
 
 
+def brier_score(preds, true) -> float:
+    return np.mean((preds - true) ** 2).astype(float)
+
+
 def compute_brier_score(submission_file: str, year: int) -> float:
     """
     Computes the Brier score for a given submission file and year.
@@ -68,8 +72,4 @@ def compute_brier_score_for_predictions(matchup_with_preds: pd.DataFrame, year: 
     df_tourney = _load_tournament_data(year)
     df_combined = _combine_data(df_tourney, matchup_with_preds)
 
-    return _compute_brier_score(df_combined[Columns.PRED], df_combined[Columns.RESULT])
-
-
-def _compute_brier_score(preds, true) -> float:
-    return np.mean((preds - true) ** 2).astype(float)
+    return brier_score(df_combined[Columns.PRED], df_combined[Columns.RESULT])
