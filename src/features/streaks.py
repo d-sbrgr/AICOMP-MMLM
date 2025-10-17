@@ -2,14 +2,14 @@
 Team Win/Loss Streaks Feature Computation
 
 This module computes win and loss streaks for teams based on game results.
-For each game in the dataset, it calculates the current streak of wins or losses
+For each game in the dataset, it calculates the current streak of wins (positive) or losses (negative)
 for each team leading up to that game.
 
 WHAT ARE STREAKS?
 Streaks represent a team's recent performance momentum:
-- Win Streak: Number of consecutive wins before the current game (0 if last game was a loss)
-- Loss Streak: Number of consecutive losses before the current game (0 if last game was a win)
-- At any point in time, a team either has a win streak OR a loss streak, but not both
+- Win Streak: Number of consecutive wins before the current game (positive integer)
+- Loss Streak: Number of consecutive losses before the current game (negative integer)
+- At any point in time, a team has a single streak value: positive for wins, negative for losses
 - Streaks reset between seasons by default
 
 USAGE EXAMPLES:
@@ -19,26 +19,21 @@ USAGE EXAMPLES:
 - Use streaks as features for prediction models
 """
 
-import pandas as pd
-import numpy as np
-
-from typing import Optional
 from collections import defaultdict
+
+import pandas as pd
 
 from ..utils.constants import Columns
 
 
 def calculate_streaks(
-    games: pd.DataFrame,
-    reset_between_seasons: bool = True,
-    include_current_game: bool = False
+    games: pd.DataFrame, reset_between_seasons: bool = True, include_current_game: bool = False
 ) -> pd.DataFrame:
     """
-    Calculate win and loss streaks for each team at each point in time.
+    Calculate win/loss streaks for each team at each point in time.
 
-    For each game, this function determines the win streak and loss streak of each team
-    (both winner and loser) leading up to that game. A team can only have either a win
-    streak or a loss streak at any given time, never both.
+    For each game, this function determines the streak of each team (winner and loser)
+    leading up to that game. Streaks are positive for consecutive wins, negative for consecutive losses.
 
     Args:
         games_df: DataFrame with game results. Must include columns:
@@ -52,11 +47,9 @@ def calculate_streaks(
                              If False, calculates the streak up to (but not including) the current game.
 
     Returns:
-        DataFrame with original game data plus four new columns:
-            - WWinStreak: Number of consecutive wins for the winning team before this game
-            - WLossStreak: Number of consecutive losses for the winning team before this game
-            - LWinStreak: Number of consecutive wins for the losing team before this game
-            - LLossStreak: Number of consecutive losses for the losing team before this game
+        DataFrame with original game data plus two new columns:
+            - WStreak: Streak for the winning team before this game (positive for wins, negative for losses)
+            - LStreak: Streak for the losing team before this game (positive for wins, negative for losses)
     """
     # Validate required columns
     required_cols = {Columns.SEASON, Columns.DAY_NUM, Columns.WTEAM_ID, Columns.LTEAM_ID}
@@ -67,15 +60,13 @@ def calculate_streaks(
     # Sort by season and day number to ensure chronological order
     sorted_games = games.sort_values([Columns.SEASON, Columns.DAY_NUM]).reset_index(drop=True).copy()
 
-    # Initialize streak tracking dictionaries
-    # Each team maps to (current_win_streak, current_loss_streak)
-    team_streaks: defaultdict[int, tuple[int, int]] = defaultdict(lambda: (0, 0))
+    # Initialize streak tracking dictionary
+    # Each team maps to current streak (positive for wins, negative for losses)
+    team_streaks: defaultdict[int, int] = defaultdict(int)
 
     # Lists to store streak values for each game
-    w_win_streaks = []
-    w_loss_streaks = []
-    l_win_streaks = []
-    l_loss_streaks = []
+    w_streaks = []
+    l_streaks = []
 
     current_season = None
 
@@ -91,25 +82,30 @@ def calculate_streaks(
         current_season = season
 
         # Get current streaks for both teams (before this game)
-        w_wins, w_losses = team_streaks[w_team]
-        l_wins, l_losses = team_streaks[l_team]
+        w_streak = team_streaks[w_team]
+        l_streak = team_streaks[l_team]
 
-        team_streaks[w_team] = (w_wins + 1, 0)
-        team_streaks[l_team] = (0, l_losses + 1)
+        # Store streaks for this game (before updating for current game)
+        w_relevant_streak = team_streaks[w_team] if include_current_game else w_streak
+        l_relevant_streak = team_streaks[l_team] if include_current_game else l_streak
 
-        w_relevant_wins, w_relevant_losses = team_streaks[w_team] if include_current_game else (w_wins, w_losses)
-        l_relevant_wins, l_relevant_losses = team_streaks[l_team] if include_current_game else (l_wins, l_losses)
+        w_streaks.append(w_relevant_streak)
+        l_streaks.append(l_relevant_streak)
 
-        # Store streaks for this game
-        w_win_streaks.append(w_relevant_wins)
-        w_loss_streaks.append(w_relevant_losses)
-        l_win_streaks.append(l_relevant_wins)
-        l_loss_streaks.append(l_relevant_losses)
+        # Update streaks for both teams after this game
+        # Winner: increment win streak or reset loss streak to 1
+        if team_streaks[w_team] > 0:
+            team_streaks[w_team] += 1
+        else:
+            team_streaks[w_team] = 1
+        # Loser: increment loss streak (more negative) or reset win streak to -1
+        if team_streaks[l_team] < 0:
+            team_streaks[l_team] -= 1
+        else:
+            team_streaks[l_team] = -1
 
     # Add streak columns to the dataframe
-    sorted_games[Columns.WWIN_STREAK] = w_win_streaks
-    sorted_games[Columns.WLOSS_STREAK] = w_loss_streaks
-    sorted_games[Columns.LWIN_STREAK] = l_win_streaks
-    sorted_games[Columns.LLOSS_STREAK] = l_loss_streaks
+    sorted_games["WStreak"] = w_streaks
+    sorted_games["LStreak"] = l_streaks
 
     return sorted_games

@@ -1,6 +1,6 @@
-import pandas as pd
+from collections.abc import Iterable
 
-from typing import Iterable
+import pandas as pd
 
 
 class Model:

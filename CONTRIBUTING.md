@@ -22,8 +22,10 @@ choco install uv
 
 ### Installing project requirements
 
+Add the ``--all-groups`` command to make sure linting dependencies are also installed
+
 ````shell
-uv sync
+uv sync --all-groups
 ````
 
 ### Adding dependencies
@@ -38,5 +40,8 @@ uv add DEPENDENCY-NAME
 uv remove DEPENDENCY-NAME
 ````
 
+### Setting up pre-commit
 
-
+````shell
+pre-commit install
+````

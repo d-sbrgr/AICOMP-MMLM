@@ -10,15 +10,38 @@ variables:
     SUBMISSION_DIR: "submissions"
     COMPETITION: "march-machine-learning-mania-2025"
 
+stages:
+  - lint
+  - submit
+
+ruff_format:
+  stage: lint
+  image: astral/uv:python3.12-alpine
+  needs: []
+  before_script:
+    - uv sync --only-group lint --locked
+  script:
+    - uvx ruff format --check notebooks src
+
+ruff_lint:
+  stage: lint
+  image: astral/uv:python3.12-alpine
+  needs: []
+  before_script:
+    - uv sync --only-group lint --locked
+  script:
+    - uvx ruff check src
+
 submit_to_kaggle:
-    image: python:3.12
-    when: manual
-    before_script:
-        - pip install kaggle
-        - mkdir -p ~/.kaggle
-        - echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
-        - chmod 600 ~/.kaggle/kaggle.json
-    script:
-        - FILE="$SUBMISSION_DIR/$[[ inputs.filename ]]"
-        - echo "Submitting $FILE to Kaggle..."
-        - kaggle competitions submit -c $COMPETITION -f "$FILE" -m "Automated GitLab submission"
+  stage: submit
+  image: python:3.12
+  when: manual
+  before_script:
+    - pip install kaggle
+    - mkdir -p ~/.kaggle
+    - echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
+    - chmod 600 ~/.kaggle/kaggle.json
+  script:
+    - FILE="$SUBMISSION_DIR/$[[ inputs.filename ]]"
+    - echo "Submitting $FILE to Kaggle..."
+    - kaggle competitions submit -c $COMPETITION -f "$FILE" -m "Automated GitLab submission"

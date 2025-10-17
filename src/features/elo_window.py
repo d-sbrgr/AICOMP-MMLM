@@ -1,15 +1,12 @@
-import pandas as pd
-import numpy as np
 from collections import defaultdict
-from typing import Optional
+
+import pandas as pd
 
 from ..utils.constants import Columns
 
 
 def calculate_elo_window_delta(
-    games: pd.DataFrame,
-    window_size: int,
-    reset_between_seasons: bool = True
+    games: pd.DataFrame, window_size: int, reset_between_seasons: bool = True
 ) -> pd.DataFrame:
     """
     Calculate Elo delta for each team based on a rolling window of previous games.
@@ -25,8 +22,7 @@ def calculate_elo_window_delta(
     Returns:
         DataFrame with added columns: WEloDelta and LEloDelta
     """
-    required_cols = {Columns.SEASON, Columns.DAY_NUM, Columns.WTEAM_ID, Columns.LTEAM_ID,
-                     Columns.WELO, Columns.LELO}
+    required_cols = {Columns.SEASON, Columns.DAY_NUM, Columns.WTEAM_ID, Columns.LTEAM_ID, Columns.WELO, Columns.LELO}
     missing = required_cols - set(games.columns)
     if missing:
         raise ValueError(f"games missing required columns: {missing}")
@@ -40,7 +36,7 @@ def calculate_elo_window_delta(
 
     current_season = None
 
-    for idx, row in sorted_games.iterrows():
+    for _, row in sorted_games.iterrows():
         season = int(row[Columns.SEASON])
         w_team = int(row[Columns.WTEAM_ID])
         l_team = int(row[Columns.LTEAM_ID])

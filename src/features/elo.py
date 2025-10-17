@@ -1,15 +1,16 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
-import pandas as pd
-import numpy as np
 
-from ..utils import Columns, Gender
+import numpy as np
+import pandas as pd
+
 from ..datasets.datasets import (
     compact_regular_season_results,
     compact_regular_season_results_per_gender,
+    compact_tourney_results,
     compact_tourney_results_per_gender,
-    compact_tourney_results
 )
+from ..utils import Columns, Gender
 
 
 @dataclass
@@ -23,6 +24,7 @@ class EloConfig:
         carry (float): Fraction of previous season's deviation from base to carry over (range: 0 to 1, default: 0.75)
         use_margin (bool): Whether to adjust K based on margin of victory (default: True)
     """
+
     base: float = 1000.0
     K: float = 20.0
     carry: float = 0.75
@@ -39,6 +41,7 @@ class RunConfig:
         max_regular_season (int | None): Maximum season year to include (inclusive). If None, includes all seasons.
         min_regular_season (int | None): Minimum season year to include (inclusive). If None, includes all seasons.
     """
+
     gender: Gender
     max_regular_season: int | None = None
     min_regular_season: int | None = None
@@ -55,8 +58,10 @@ def _season_carryover(prev_elos: dict[int, float], cfg: EloConfig) -> dict[int, 
     return next_elos
 
 
-def calculate_elo(rcfg: RunConfig, ecfg: EloConfig, include_predictions: bool = False) -> tuple[pd.DataFrame, dict[int, float]]:
-    """"
+def calculate_elo(
+    rcfg: RunConfig, ecfg: EloConfig, include_predictions: bool = False
+) -> tuple[pd.DataFrame, dict[int, float]]:
+    """ "
     Calculate Elo ratings for teams based on game results.
     The Elo ratings are calculated based on regular season and tournament results only.
 
@@ -110,9 +115,9 @@ def calculate_elo(rcfg: RunConfig, ecfg: EloConfig, include_predictions: bool = 
             elos = _season_carryover(elos, ecfg)
             cur_season = season
 
-        w, l = int(row.WTeamID), int(row.LTeamID)
+        winning_team, losing_team = int(row.WTeamID), int(row.LTeamID)
 
-        w_elo, l_elo = elos.get(w, ecfg.base), elos.get(l, ecfg.base)
+        w_elo, l_elo = elos.get(winning_team, ecfg.base), elos.get(losing_team, ecfg.base)
         p_win = predict_win(w_elo, l_elo)
         preds.append(p_win)
         w_elos.append(w_elo)
@@ -124,8 +129,8 @@ def calculate_elo(rcfg: RunConfig, ecfg: EloConfig, include_predictions: bool = 
             mov_mult = np.log(margin + 1.0)
             k = ecfg.K * mov_mult
 
-        elos[w] = w_elo + k * (1.0 - p_win)
-        elos[l] = l_elo + k * (0.0 - (1.0 - p_win))
+        elos[winning_team] = w_elo + k * (1.0 - p_win)
+        elos[losing_team] = l_elo + k * (0.0 - (1.0 - p_win))
 
     df_elo[Columns.WELO] = w_elos
     df_elo[Columns.LELO] = l_elos

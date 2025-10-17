@@ -1,0 +1,49 @@
+line-length = 120
+indent-width = 4
+target-version = "py312"
+output-format = "concise"
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+docstring-code-format = true
+
+[lint]
+select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "UP",
+    "B",
+    "C4",
+    "RET",
+    "SIM",
+    "RUF",
+]
+ignore = [
+    "E203",
+    "W293",
+    "B028"
+]
+fixable = ["ALL"]
+unfixable = []
+
+[lint.isort]
+known-first-party = ["src"]
+combine-as-imports = true
+
+[lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[lint.pydocstyle]
+convention = "google"
+
+[lint.mccabe]
+max-complexity = 12
+
+[lint.pyupgrade]
+keep-runtime-typing = true
+
+[lint.pep8-naming]
