@@ -1,10 +1,10 @@
+from collections.abc import Iterable
+
 import pandas as pd
 
-from typing import Iterable
-
-from .model import Model
-from ..datasets.datasets import seeds
-from ..utils.constants import Columns
+from ...datasets.datasets import seeds
+from ...utils.constants import Columns
+from ..model import Model
 
 MAX_SEED = 16.0
 MIN_SEED = 1.0
@@ -20,7 +20,7 @@ class SeedRatioModel(Model):
     The probability of team A winning against team B is given by:
     P(A beats B) = Seed_B / (Seed_A + Seed_B)
 
-    This results in a higher probability of winning, the lower (better) the seed of team A is compared to team B.    
+    This results in a higher probability of winning, the lower (better) the seed of team A is compared to team B.
     """
 
     def __init__(self):
@@ -34,10 +34,16 @@ class SeedRatioModel(Model):
         self._seeds_mean = seeds_mean
 
     def predict(self, matchups: pd.DataFrame) -> Iterable[float]:
-        updated_matchups = matchups.merge(self._seeds_mean, how="left", left_on=Columns.LOWER_TEAM,
-                                          right_on=Columns.TEAM_ID).rename(columns={Columns.SEED: SEED_LOWER}).drop(columns=[Columns.TEAM_ID])
-        updated_matchups = updated_matchups.merge(self._seeds_mean, how="left", left_on=Columns.HIGHER_TEAM,
-                                                  right_on=Columns.TEAM_ID).rename(columns={Columns.SEED: SEED_HIGHER}).drop(columns=[Columns.TEAM_ID])
+        updated_matchups = (
+            matchups.merge(self._seeds_mean, how="left", left_on=Columns.LOWER_TEAM, right_on=Columns.TEAM_ID)
+            .rename(columns={Columns.SEED: SEED_LOWER})
+            .drop(columns=[Columns.TEAM_ID])
+        )
+        updated_matchups = (
+            updated_matchups.merge(self._seeds_mean, how="left", left_on=Columns.HIGHER_TEAM, right_on=Columns.TEAM_ID)
+            .rename(columns={Columns.SEED: SEED_HIGHER})
+            .drop(columns=[Columns.TEAM_ID])
+        )
 
         # If no seed is provided for the team, assume that it is a rather bad team
         updated_matchups.fillna(UNSEEDED, inplace=True)

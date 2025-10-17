@@ -1,7 +1,7 @@
 from ..models.model import Model
-from .brier_score import compute_brier_score_for_predictions
 from ..submissions.matchups import generate_matchups
 from ..utils.constants import Columns
+from .brier import compute_brier_score_for_predictions
 
 
 def evaluate(model: Model, season: int) -> float:

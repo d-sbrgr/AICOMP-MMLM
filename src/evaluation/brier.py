@@ -1,17 +1,21 @@
-import pandas as pd
-import numpy as np
 import warnings
 
-from ..utils import get_submissions_directory, get_data_directory
+import numpy as np
+import pandas as pd
+
+from ..utils import get_data_directory, get_submissions_directory
 from ..utils.constants import Columns
 
 
 def _load_submission_data(submission_file: str, year: int) -> pd.DataFrame:
     df_submission = pd.read_csv(get_submissions_directory() / submission_file)
 
-    df_submission[[Columns.SEASON, Columns.LOWER_TEAM, Columns.HIGHER_TEAM]] = df_submission['ID'].str.split('_', expand=True)
-    df_submission[[Columns.SEASON, Columns.LOWER_TEAM, Columns.HIGHER_TEAM]] = df_submission[[Columns.SEASON, Columns.LOWER_TEAM, Columns.HIGHER_TEAM]].apply(
-        pd.to_numeric)
+    df_submission[[Columns.SEASON, Columns.LOWER_TEAM, Columns.HIGHER_TEAM]] = df_submission["ID"].str.split(
+        "_", expand=True
+    )
+    df_submission[[Columns.SEASON, Columns.LOWER_TEAM, Columns.HIGHER_TEAM]] = df_submission[
+        [Columns.SEASON, Columns.LOWER_TEAM, Columns.HIGHER_TEAM]
+    ].apply(pd.to_numeric)
 
     # ensure only the year in question is kept
     df_submission_year = df_submission[df_submission[Columns.SEASON] == year].copy()
@@ -29,7 +33,7 @@ def _load_tournament_data(year: int) -> pd.DataFrame:
     df_tourney_year = df_tourneys[df_tourneys[Columns.SEASON] == year].copy()
 
     # add column with the 'Result' in terms of the lower ID team -> 1 if lower ID team won, 0 if higher ID team won
-    df_tourney_year['Result'] = np.where(df_tourney_year[Columns.WTEAM_ID] < df_tourney_year[Columns.LTEAM_ID], 1, 0)
+    df_tourney_year["Result"] = np.where(df_tourney_year[Columns.WTEAM_ID] < df_tourney_year[Columns.LTEAM_ID], 1, 0)
 
     # add columns for lowerID and higherID
     df_tourney_year[Columns.LOWER_TEAM] = df_tourney_year[[Columns.WTEAM_ID, Columns.LTEAM_ID]].min(axis=1)
@@ -41,7 +45,7 @@ def _load_tournament_data(year: int) -> pd.DataFrame:
 
 def _combine_data(df_tourney: pd.DataFrame, df_submission: pd.DataFrame) -> pd.DataFrame:
     # merge the two dataframes on lowerID and higherID
-    df_merged = pd.merge(df_tourney, df_submission, on=[Columns.LOWER_TEAM, Columns.HIGHER_TEAM], how='left')
+    df_merged = pd.merge(df_tourney, df_submission, on=[Columns.LOWER_TEAM, Columns.HIGHER_TEAM], how="left")
     missing_pred = df_merged[Columns.PRED].isna().sum()
 
     if missing_pred > 0:

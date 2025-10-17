@@ -1,10 +1,10 @@
+from collections.abc import Iterable
+
 import pandas as pd
 
-from typing import Iterable
-
-from .model import Model
-from ..datasets.datasets import compact_tourney_results, compact_regular_season_results
-from ..utils.constants import Columns
+from ...datasets.datasets import compact_regular_season_results, compact_tourney_results
+from ...utils.constants import Columns
+from ..model import Model
 
 
 class WinRatioModel(Model):
@@ -36,19 +36,36 @@ class WinRatioModel(Model):
         self._win_rates = self._calculate_win_rates(all_results)
 
     def predict(self, matchups: pd.DataFrame) -> Iterable[float]:
-        updated_matchups = matchups.merge(self._win_rates, how="left", left_on=Columns.LOWER_TEAM,
-                                          right_on=Columns.TEAM_ID).rename(columns={self.WIN_RATE: self.WIN_RATE_LOWER}).drop(columns=[Columns.TEAM_ID])
-        updated_matchups = updated_matchups.merge(self._win_rates, how="left", left_on=Columns.HIGHER_TEAM,
-                                                  right_on=Columns.TEAM_ID).rename(columns={self.WIN_RATE: self.WIN_RATE_HIGHER}).drop(columns=[Columns.TEAM_ID])
+        updated_matchups = (
+            matchups.merge(self._win_rates, how="left", left_on=Columns.LOWER_TEAM, right_on=Columns.TEAM_ID)
+            .rename(columns={self.WIN_RATE: self.WIN_RATE_LOWER})
+            .drop(columns=[Columns.TEAM_ID])
+        )
+        updated_matchups = (
+            updated_matchups.merge(self._win_rates, how="left", left_on=Columns.HIGHER_TEAM, right_on=Columns.TEAM_ID)
+            .rename(columns={self.WIN_RATE: self.WIN_RATE_HIGHER})
+            .drop(columns=[Columns.TEAM_ID])
+        )
 
-        return updated_matchups[self.WIN_RATE_LOWER] / (updated_matchups[self.WIN_RATE_LOWER] + updated_matchups[self.WIN_RATE_HIGHER])
+        return updated_matchups[self.WIN_RATE_LOWER] / (
+            updated_matchups[self.WIN_RATE_LOWER] + updated_matchups[self.WIN_RATE_HIGHER]
+        )
 
     def _calculate_win_rates(self, games: pd.DataFrame) -> pd.DataFrame:
-        tourney_stats = games.groupby(by=Columns.WTEAM_ID).size().reset_index(name=self.WINS).rename(columns={Columns.WTEAM_ID: Columns.TEAM_ID})
-        tourney_stats[self.LOSSES] = games.groupby(by=Columns.LTEAM_ID).size().reset_index(name=self.LOSSES)[self.LOSSES]
+        tourney_stats = (
+            games.groupby(by=Columns.WTEAM_ID)
+            .size()
+            .reset_index(name=self.WINS)
+            .rename(columns={Columns.WTEAM_ID: Columns.TEAM_ID})
+        )
+        tourney_stats[self.LOSSES] = (
+            games.groupby(by=Columns.LTEAM_ID).size().reset_index(name=self.LOSSES)[self.LOSSES]
+        )
         tourney_stats[self.GAMES] = tourney_stats[self.WINS] + tourney_stats[self.LOSSES]
 
         # Win rate with bayesian smoothing
-        tourney_stats[self.WIN_RATE] = (tourney_stats[self.WINS] + self.alpha * self.prior) / (tourney_stats[self.GAMES] + self.alpha)
+        tourney_stats[self.WIN_RATE] = (tourney_stats[self.WINS] + self.alpha * self.prior) / (
+            tourney_stats[self.GAMES] + self.alpha
+        )
 
         return tourney_stats

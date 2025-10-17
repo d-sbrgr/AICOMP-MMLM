@@ -1,7 +1,4 @@
-__all__ = [
-    "generate_matchups",
-    "save_submission"
-]
+__all__ = ["create_submission", "generate_matchups", "save_submission"]
 
 from .matchups import generate_matchups
-from .submission import save_submission, create_submission
+from .submission import create_submission, save_submission
