@@ -1,6 +1,6 @@
 import pandas as pd
 
-from ..datasets.datasets import (
+from src.datasets.datasets import (
     detailed_regular_season_results,
     detailed_tourney_results,
     overall_elo_delta,
@@ -8,11 +8,12 @@ from ..datasets.datasets import (
     seeds,
     team_quality,
 )
-from ..utils import Columns
-from .base_dataloader import BaseDataloader
+from src.utils import Columns
+
+from .xgboost_dataloader import XGBDataLoader
 
 
-class SeasonAverageDataLoader(BaseDataloader):
+class SeasonAverageDataLoader(XGBDataLoader):
     """
     Loads and prepares season-averaged features and metadata for XGBoost and random forest modeling.
 
@@ -30,9 +31,11 @@ class SeasonAverageDataLoader(BaseDataloader):
         _df_quality_t2 (pd.DataFrame): Quality info for T2 teams.
         _features (list[str]): List of feature columns used for modeling.
         _prediction_season (int): The season for which predictions are made.
+        _start_season (int): The first season for which the model is trained on.
     """
 
-    def __init__(self, features: list[str]):
+    def __init__(self, num_features: int):
+        super().__init__(num_features)
         self._data: pd.DataFrame | None = None
         self._df_season_stats_t1: pd.DataFrame | None = None
         self._df_season_stats_t2: pd.DataFrame | None = None
@@ -40,16 +43,8 @@ class SeasonAverageDataLoader(BaseDataloader):
         self._df_seeds_t2: pd.DataFrame | None = None
         self._df_quality_t1: pd.DataFrame | None = None
         self._df_quality_t2: pd.DataFrame | None = None
-        self._features: list[str] = features
         self._prediction_season: int | None = None
-
-    @property
-    def features(self) -> list[str]:
-        return self._features
-
-    @features.setter
-    def features(self, features: list[str]):
-        self._features = features
+        self._start_season: int | None = None
 
     def setup(self) -> None:
         """
@@ -144,23 +139,31 @@ class SeasonAverageDataLoader(BaseDataloader):
         # Store final tournament data
         self._data = df_tourney
 
-    def train_data(self, prediction_season: int, featues: list[str] | None = None) -> tuple[pd.DataFrame, pd.Series]:
+    def train_data(self, prediction_season: int, start_season: int) -> tuple[pd.DataFrame, pd.Series]:
         """
         Return training features and targets for all seasons before the prediction season.
 
         Args:
             prediction_season (int): The season to predict (excluded from training).
-            featues (list[str] | None): List of feature columns to use. If None, uses all available features.
+            start_season (int): The first season contained in the training data.
 
         Returns:
             tuple[pd.DataFrame, pd.Series]: Training features and target values.
         """
+        if prediction_season <= start_season:
+            raise ValueError("prediction_season must be greater than minimum_season")
         if not 2003 <= prediction_season <= 2025:
             raise ValueError("prediction_season must be between 2003 and 2025")
+        if not 2003 <= start_season <= 2024:
+            raise ValueError("minimum_season must be between 2003 and 2024")
         self._prediction_season = prediction_season
+        self._start_season = start_season
+        mask = (self._data[Columns.SEASON] < self._prediction_season) & (
+            self._data[Columns.SEASON] >= self._start_season
+        )
         return (
-            self._data.loc[self._data[Columns.SEASON] < prediction_season, self._features],
-            self._data.loc[self._data[Columns.SEASON] < prediction_season, "Target"].squeeze(),
+            self._data.loc[mask, self._features],
+            self._data.loc[mask, "Target"].squeeze(),
         )
 
     def valid_data(self) -> tuple[pd.DataFrame, pd.Series]:
@@ -172,9 +175,12 @@ class SeasonAverageDataLoader(BaseDataloader):
         """
         if not self._features:
             raise RuntimeError("Must call train_data first")
+        mask = (self._data[Columns.SEASON] == self._prediction_season) & (
+            self._data[Columns.SEASON] >= self._start_season
+        )
         return (
-            self._data.loc[self._data[Columns.SEASON] == self._prediction_season, self._features],
-            self._data.loc[self._data[Columns.SEASON] == self._prediction_season, "Target"].squeeze(),
+            self._data.loc[mask, self._features],
+            self._data.loc[mask, "Target"].squeeze(),
         )
 
     def test_data(self, df_matchups: pd.DataFrame) -> pd.DataFrame:
