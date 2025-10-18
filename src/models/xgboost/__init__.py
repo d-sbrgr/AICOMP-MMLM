@@ -1,5 +1,4 @@
-__all__ = ["CrossValidationConfig", "XGBConfig", "XGBRegressorModel", "get_run_name"]
+__all__ = ["CrossValidationConfig", "XGBHyperparamConfig", "XGBRegressorModel", "XGBRunConfig", "get_run_name"]
 
-from .config import CrossValidationConfig, XGBConfig
+from .config import CrossValidationConfig, XGBHyperparamConfig, XGBRunConfig, get_run_name
 from .model import XGBRegressorModel
-from .utils import get_run_name

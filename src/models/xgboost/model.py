@@ -8,7 +8,7 @@ from ...dataloaders.base_dataloader import BaseDataloader
 from ...evaluation import brier_score
 from ...experiments import Tracker
 from ..model import Model
-from .config import CrossValidationConfig, XGBConfig
+from .config import CrossValidationConfig, XGBHyperparamConfig
 from .cv_runner import CVRunner
 
 
@@ -17,15 +17,17 @@ class XGBRegressorModel(Model):
     A wrapper class to train and validate xgboost models.
     """
 
-    def __init__(self, data: BaseDataloader, params: XGBConfig, cv: CrossValidationConfig, tracker: Tracker) -> None:
+    def __init__(
+        self, data: BaseDataloader, params: XGBHyperparamConfig, cv: CrossValidationConfig, tracker: Tracker
+    ) -> None:
         super().__init__()
         self.data = data
         self.params = params
         self.cv_cfg = cv
         self.tracker = tracker
-        self.model = None
+        self.model: xgb.Booster | None = None
 
-    def fit(self, season: int) -> None:
+    def fit(self, season: int, start_season: int = 2003) -> None:
         """
         Fit the model on data provided by the given dataloader.
 
@@ -33,9 +35,10 @@ class XGBRegressorModel(Model):
 
         Args:
             season (int): Season for which the model should be validated.
+            start_season (int): Start season for which the model should be trained on.
         """
         self.data.setup()
-        X, y = self.data.train_data(season)
+        X, y = self.data.train_data(season, start_season)
         X = self._drop_and_sort_features(X)
 
         cv_runner = CVRunner(self.cv_cfg)

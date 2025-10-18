@@ -1,9 +1,10 @@
+import time
 from dataclasses import asdict, dataclass
 from typing import Any
 
 
 @dataclass
-class XGBConfig:
+class XGBHyperparamConfig:
     """
     Refer to https://xgboost.readthedocs.io/en/stable/parameter.html
     """
@@ -26,6 +27,7 @@ class XGBConfig:
     tree_method: str = "hist"
     max_bin: int = 256
     grow_policy: str = "lossguide"
+    seed: int = 42
 
     def as_params(self) -> dict[str, Any]:
         params = asdict(self)
@@ -43,6 +45,21 @@ class XGBConfig:
             "reg_lambda": self.reg_lambda,
             "reg_alpha": self.reg_alpha,
         }
+
+
+@dataclass
+class XGBRunConfig:
+    num_features: int = 10
+    valid_season: int = 2024
+    start_season: int = 2003
+    data_loader: str = "season_average"
+
+
+def get_run_name(hyperparameters: XGBHyperparamConfig, run_config: XGBRunConfig) -> str:
+    """Return a meaningful run name for wandb experiment tracking."""
+    items = asdict(run_config)
+    items.update(hyperparameters.run_name())
+    return f"xgb_{'_'.join(f'{k}-{v}' for k, v in sorted(items.items()))}_{time.strftime('%y%m%d-%H%M%S')}"
 
 
 @dataclass
