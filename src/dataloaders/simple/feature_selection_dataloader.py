@@ -89,7 +89,7 @@ FEATURES = [
 ]
 
 
-class XGBDataLoader(BaseDataloader):
+class FeatureSelectionDataLoader(BaseDataloader):
     def __init__(self, num_features: int):
         self._features = self.get_features(num_features)
 

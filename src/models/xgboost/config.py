@@ -1,10 +1,11 @@
-import time
 from dataclasses import asdict, dataclass
 from typing import Any
 
+from ..hyperparam_config import HyperparamConfig
+
 
 @dataclass
-class XGBHyperparamConfig:
+class XGBHyperparamConfig(HyperparamConfig):
     """
     Refer to https://xgboost.readthedocs.io/en/stable/parameter.html
     """
@@ -45,25 +46,3 @@ class XGBHyperparamConfig:
             "reg_lambda": self.reg_lambda,
             "reg_alpha": self.reg_alpha,
         }
-
-
-@dataclass
-class XGBRunConfig:
-    num_features: int = 10
-    valid_season: int = 2024
-    start_season: int = 2003
-    data_loader: str = "season_average"
-
-
-def get_run_name(hyperparameters: XGBHyperparamConfig, run_config: XGBRunConfig) -> str:
-    """Return a meaningful run name for wandb experiment tracking."""
-    items = asdict(run_config)
-    items.update(hyperparameters.run_name())
-    return f"xgb_{'_'.join(f'{k}-{v}' for k, v in sorted(items.items()))}_{time.strftime('%y%m%d-%H%M%S')}"
-
-
-@dataclass
-class CrossValidationConfig:
-    n_splits: int = 5
-    shuffle: bool = True
-    seed: int = 42
