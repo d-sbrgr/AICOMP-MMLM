@@ -1,9 +1,11 @@
 import wandb
 
-from ...dataloaders.xgboost import SeasonAverageDataLoader, XGBDataLoader
+from ...dataloaders.simple import FeatureSelectionDataLoader, SeasonAverageDataLoader
 from ...experiments import ExperimentConfig, WandbTracker
+from ...experiments.config import RunConfig, get_run_name
+from ...models.cross_validation.cv_config import CrossValidationConfig
 from ...models.xgboost import XGBRegressorModel
-from ...models.xgboost.config import CrossValidationConfig, XGBHyperparamConfig, XGBRunConfig, get_run_name
+from ...models.xgboost.config import XGBHyperparamConfig
 from ...utils import unflatten_config
 
 
@@ -19,7 +21,7 @@ def run_xgboost(run: wandb.Run):
 
     The config is a dictionary defining the following fields:
 
-        - run_config: Key-value mapping initializing a `XGBRunConfig` object
+        - run_config: Key-value mapping initializing a `RunConfig` object
         - xgboost_config: Key-value mapping initializing a `XGBHyperparamConfig` object
         - experiment_config: Key-value mapping initializing an `ExperimentConfig` object
 
@@ -30,9 +32,9 @@ def run_xgboost(run: wandb.Run):
         run (wandb.Run): W&B experiment tracking run
     """
     config = unflatten_config(run.config)
-    run_config = XGBRunConfig(**config.get("run_config", {}))
+    run_config = RunConfig(**config.get("run_config", {}))
 
-    data_loader: XGBDataLoader = {"season_average": SeasonAverageDataLoader}.get(
+    data_loader: FeatureSelectionDataLoader = {"season_average": SeasonAverageDataLoader}.get(
         run_config.data_loader, SeasonAverageDataLoader
     )(run_config.num_features)
 

@@ -10,10 +10,10 @@ from src.datasets.datasets import (
 )
 from src.utils import Columns
 
-from .xgboost_dataloader import XGBDataLoader
+from .feature_selection_dataloader import FeatureSelectionDataLoader
 
 
-class SeasonAverageDataLoader(XGBDataLoader):
+class SeasonAverageDataLoader(FeatureSelectionDataLoader):
     """
     Loads and prepares season-averaged features and metadata for XGBoost and random forest modeling.
 
