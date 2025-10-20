@@ -1,21 +1,37 @@
+"""Random Forest model training wrapper - uses generic runner."""
+
 import wandb
 
-from ...dataloaders.simple import SeasonAverageDataLoader
-from ...experiments import ExperimentConfig, WandbTracker
-from ...experiments.config import RunConfig, get_run_name
 from ...models.randomforest import RandomForestRegressorModel
 from ...models.randomforest.config import RandomForestHyperparamConfig
+from .generic import run_model, sweep_model
 
 
 def sweep_randomforest(config=None, **kwargs):
-    """Wrapper for W&B agent run."""
-    with wandb.init(config=config, **kwargs) as run:
-        run_randomforest(run)
+    """
+    Wrapper for W&B agent run for Random Forest models.
+
+    Does not use cross-validation by default (cv_config=None).
+
+    Args:
+        config: W&B sweep configuration
+        **kwargs: Additional arguments to pass to wandb.init()
+    """
+    sweep_model(
+        RandomForestRegressorModel,
+        RandomForestHyperparamConfig,
+        "randomforest_config",
+        cv_config=None,
+        config=config,
+        **kwargs,
+    )
 
 
 def run_randomforest(run: wandb.Run):
     """
     Train and validate a RandomForestRegressorModel using the given config with wandb experiment tracking.
+
+    Does not use cross-validation by default (cv_config=None).
 
     The config is a dictionary defining the following fields:
 
@@ -29,20 +45,4 @@ def run_randomforest(run: wandb.Run):
     Args:
         run (wandb.Run): W&B experiment tracking run
     """
-    config = run.config
-    run_config = RunConfig(**config.get("run_config", {}))
-
-    data_loader = {"season_average": SeasonAverageDataLoader}.get(run_config.data_loader, SeasonAverageDataLoader)(
-        run_config.num_features
-    )
-
-    hyperparameters = RandomForestHyperparamConfig(**config.get("randomforest_config", {}))
-    experiment_config = ExperimentConfig(
-        **config.get("experiment_config", {}), name=get_run_name(hyperparameters, run_config)
-    )
-
-    tracker = WandbTracker(experiment_config, run)
-    model = RandomForestRegressorModel(data_loader, hyperparameters, None, tracker)
-
-    model.fit(run_config.valid_season, run_config.start_season)
-    model.validate()
+    run_model(run, RandomForestRegressorModel, RandomForestHyperparamConfig, "randomforest_config", cv_config=None)

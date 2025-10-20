@@ -7,13 +7,14 @@ from sklearn.ensemble import RandomForestRegressor
 from ...dataloaders.base_dataloader import BaseDataloader
 from ...evaluation import brier_score
 from ...experiments import Tracker
+from ...utils.constants import Columns, Metrics
 from ..cross_validation.cv_config import CrossValidationConfig
 from ..cross_validation.cv_runner import CVRunner
-from ..model import Model
+from ..model import SupervisedModel
 from .config import RandomForestHyperparamConfig
 
 
-class RandomForestRegressorModel(Model):
+class RandomForestRegressorModel(SupervisedModel):
     """
     A wrapper class to train and validate Random Forest models using scikit-learn.
     """
@@ -25,11 +26,7 @@ class RandomForestRegressorModel(Model):
         cv: CrossValidationConfig | None,
         tracker: Tracker,
     ) -> None:
-        super().__init__()
-        self.data = data
-        self.params = params
-        self.cv_cfg = cv
-        self.tracker = tracker
+        super().__init__(data, params, cv, tracker)
         self.model: RandomForestRegressor | None = None
 
     def fit(self, season: int, start_season: int = 2003) -> None:
@@ -53,7 +50,7 @@ class RandomForestRegressorModel(Model):
 
         preds = self.model.predict(X)
         preds = np.clip(preds, 0, 1)
-        self.tracker.log({"train_brier": brier_score(y.values, preds)})
+        self.tracker.log({Metrics.TRAIN_BRIER: brier_score(y.values, preds)})
 
     def validate(self):
         """
@@ -67,7 +64,7 @@ class RandomForestRegressorModel(Model):
         X = self._drop_and_sort_features(X)
         preds = self.model.predict(X)
         preds = np.clip(preds, 0, 1)
-        self.tracker.log({"valid_brier": brier_score(y.values, preds)})
+        self.tracker.log({Metrics.VALID_BRIER: brier_score(y.values, preds)})
 
     def predict(self, matchups: pd.DataFrame) -> Iterable[float]:
         """
@@ -86,7 +83,7 @@ class RandomForestRegressorModel(Model):
         return pd.Series(preds, index=X.index)
 
     def _drop_and_sort_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        id_cols = ["Season", "T1_TeamID", "T2_TeamID"]
+        id_cols = [Columns.SEASON, Columns.T1_TEAM_ID, Columns.T2_TEAM_ID]
         df = df.drop(columns=[c for c in id_cols if c in df.columns])
         return df
 
@@ -99,16 +96,13 @@ class RandomForestRegressorModel(Model):
         out_of_frame = np.zeros(len(y))
 
         for fold, (tr_idx, va_idx) in enumerate(splits):
-            # Create and train model for this fold
             rf_model = RandomForestRegressor(**self.params.as_params())
             rf_model.fit(X.iloc[tr_idx], y.values[tr_idx])
 
-            # Make predictions on validation fold
             preds = rf_model.predict(X.iloc[va_idx])
-            # Clip predictions to [0, 1] range for probabilities
             preds = np.clip(preds, 0, 1)
             out_of_frame[va_idx] = preds
 
-            self.tracker.log({"fold": fold, "train_brier_cv_fold": brier_score(y.values[va_idx], preds)})
+            self.tracker.log({Metrics.FOLD: fold, Metrics.TRAIN_BRIER_CV_FOLD: brier_score(y.values[va_idx], preds)})
 
-        self.tracker.log({"train_brier_cv_full": brier_score(y.values, out_of_frame)})
+        self.tracker.log({Metrics.TRAIN_BRIER_CV_FULL: brier_score(y.values, out_of_frame)})

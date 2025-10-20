@@ -1,23 +1,38 @@
+"""XGBoost model training wrapper - uses generic runner."""
+
 import wandb
 
-from ...dataloaders.simple import FeatureSelectionDataLoader, SeasonAverageDataLoader
-from ...experiments import ExperimentConfig, WandbTracker
-from ...experiments.config import RunConfig, get_run_name
 from ...models.cross_validation.cv_config import CrossValidationConfig
 from ...models.xgboost import XGBRegressorModel
 from ...models.xgboost.config import XGBHyperparamConfig
-from ...utils import unflatten_config
+from .generic import run_model, sweep_model
 
 
 def sweep_xgboost(config=None, **kwargs):
-    """Wrapper for W&B agent run (LLM inference mode)."""
-    with wandb.init(config=config, **kwargs) as run:
-        run_xgboost(run)
+    """
+    Wrapper for W&B agent run for XGBoost models.
+
+    Uses cross-validation by default.
+
+    Args:
+        config: W&B sweep configuration
+        **kwargs: Additional arguments to pass to wandb.init()
+    """
+    sweep_model(
+        XGBRegressorModel,
+        XGBHyperparamConfig,
+        "xgboost_config",
+        cv_config=CrossValidationConfig(),
+        config=config,
+        **kwargs,
+    )
 
 
 def run_xgboost(run: wandb.Run):
     """
     Train and validate an XGBRegressorModel using the given config with wandb experiment tracking.
+
+    Uses cross-validation by default.
 
     The config is a dictionary defining the following fields:
 
@@ -31,22 +46,4 @@ def run_xgboost(run: wandb.Run):
     Args:
         run (wandb.Run): W&B experiment tracking run
     """
-    config = unflatten_config(run.config)
-    run_config = RunConfig(**config.get("run_config", {}))
-
-    data_loader: FeatureSelectionDataLoader = {"season_average": SeasonAverageDataLoader}.get(
-        run_config.data_loader, SeasonAverageDataLoader
-    )(run_config.num_features)
-
-    hyperparameters = XGBHyperparamConfig(**config.get("xgboost_config", {}))
-    experiment_config = ExperimentConfig(
-        **config.get("experiment_config", {}), name=get_run_name(hyperparameters, run_config)
-    )
-
-    # Initialize the experiment tracker and model
-    tracker = WandbTracker(experiment_config, run)
-    model = XGBRegressorModel(data_loader, hyperparameters, CrossValidationConfig(), tracker)
-
-    # Train and validate the model using the given parameters
-    model.fit(run_config.valid_season, run_config.start_season)
-    model.validate()
+    run_model(run, XGBRegressorModel, XGBHyperparamConfig, "xgboost_config", cv_config=CrossValidationConfig())
