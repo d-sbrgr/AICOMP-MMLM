@@ -8,7 +8,7 @@ from src.datasets.datasets import (
     seeds,
     team_quality,
 )
-from src.utils import Columns
+from src.utils.constants import Columns
 
 from .feature_selection_dataloader import FeatureSelectionDataLoader
 
@@ -56,36 +56,52 @@ class SeasonAverageDataLoader(FeatureSelectionDataLoader):
         df_regular = pd.merge(
             df_regular,
             self._prepare_additional_features(overall_elo_delta()),
-            on=["Season", "DayNum", "T1_TeamID", "T2_TeamID"],
+            on=[Columns.SEASON, Columns.DAY_NUM, Columns.T1_TEAM_ID, Columns.T2_TEAM_ID],
             how="left",
         )
         df_regular = pd.merge(
             df_regular,
             self._prepare_additional_features(regular_season_streaks()),
-            on=["Season", "DayNum", "T1_TeamID", "T2_TeamID"],
+            on=[Columns.SEASON, Columns.DAY_NUM, Columns.T1_TEAM_ID, Columns.T2_TEAM_ID],
             how="left",
         )
 
         # Compute season averages for each team
         boxcols = list(
             set(df_regular.columns).difference(
-                {"Season", "DayNum", "T1_TeamID", "T2_TeamID", "NumOT", "MenWomen", "Target"}
+                {
+                    Columns.SEASON,
+                    Columns.DAY_NUM,
+                    Columns.T1_TEAM_ID,
+                    Columns.T2_TEAM_ID,
+                    Columns.NUM_OT,
+                    Columns.MEN_WOMEN,
+                    Columns.TARGET,
+                }
             )
         )
-        df_season_stats = df_regular.groupby(["Season", "T1_TeamID"])[boxcols].agg("mean").reset_index()
+        df_season_stats = df_regular.groupby([Columns.SEASON, Columns.T1_TEAM_ID])[boxcols].agg("mean").reset_index()
 
         # Stack T1 and T2 ELOs for each team/game
-        df_elo = df_regular[["Season", "DayNum", "T1_TeamID", "T1_Elo"]].rename(
-            columns={"T1_TeamID": "TeamID", "T1_Elo": "LastElo"}
+        df_elo = df_regular[[Columns.SEASON, Columns.DAY_NUM, Columns.T1_TEAM_ID, Columns.T1_ELO]].rename(
+            columns={Columns.T1_TEAM_ID: Columns.TEAM_ID, Columns.T1_ELO: Columns.LAST_ELO}
         )
-        df_elo = df_elo.sort_values(["Season", "TeamID", "DayNum"]).groupby(["Season", "TeamID"]).tail(1)
+        df_elo = (
+            df_elo.sort_values([Columns.SEASON, Columns.TEAM_ID, Columns.DAY_NUM])
+            .groupby([Columns.SEASON, Columns.TEAM_ID])
+            .tail(1)
+        )
 
         # Merge last ELO into season stats
         df_season_stats = pd.merge(
-            df_season_stats, df_elo, left_on=["Season", "T1_TeamID"], right_on=["Season", "TeamID"], how="left"
+            df_season_stats,
+            df_elo,
+            left_on=[Columns.SEASON, Columns.T1_TEAM_ID],
+            right_on=[Columns.SEASON, Columns.TEAM_ID],
+            how="left",
         )
-        df_season_stats = df_season_stats.drop(columns=["TeamID"])
-        df_season_stats = df_season_stats.rename(columns={"LastElo": "T1_LastElo"})
+        df_season_stats = df_season_stats.drop(columns=[Columns.TEAM_ID])
+        df_season_stats = df_season_stats.rename(columns={Columns.LAST_ELO: "T1_LastElo"})
 
         # Prepare team stats for merging (T1 and T2 perspectives)
         self._df_season_stats_T1 = df_season_stats.copy()
@@ -93,7 +109,8 @@ class SeasonAverageDataLoader(FeatureSelectionDataLoader):
             "T1_avg_" + x.replace("T1_", "").replace("T2_", "opponent_") for x in list(self._df_season_stats_T1.columns)
         ]
         self._df_season_stats_T1 = self._df_season_stats_T1.rename(
-            {"T1_avg_Season": "Season", "T1_avg_TeamID": "T1_TeamID", "T1_avg_LastElo": "T1_Elo"}, axis=1
+            {"T1_avg_Season": Columns.SEASON, "T1_avg_TeamID": Columns.T1_TEAM_ID, "T1_avg_LastElo": Columns.T1_ELO},
+            axis=1,
         )
 
         self._df_season_stats_T2 = df_season_stats.copy()
@@ -101,40 +118,52 @@ class SeasonAverageDataLoader(FeatureSelectionDataLoader):
             "T2_avg_" + x.replace("T1_", "").replace("T2_", "opponent_") for x in list(self._df_season_stats_T2.columns)
         ]
         self._df_season_stats_T2 = self._df_season_stats_T2.rename(
-            {"T2_avg_Season": "Season", "T2_avg_TeamID": "T2_TeamID", "T2_avg_LastElo": "T2_Elo"}, axis=1
+            {"T2_avg_Season": Columns.SEASON, "T2_avg_TeamID": Columns.T2_TEAM_ID, "T2_avg_LastElo": Columns.T2_ELO},
+            axis=1,
         )
 
         # Prepare and merge seed data
         df_seeds = seeds()
-        self._df_seeds_T1 = df_seeds[["Season", "TeamID", "Seed"]].copy()
-        self._df_seeds_T2 = df_seeds[["Season", "TeamID", "Seed"]].copy()
-        self._df_seeds_T1.columns = ["Season", "T1_TeamID", "T1_seed"]
-        self._df_seeds_T2.columns = ["Season", "T2_TeamID", "T2_seed"]
+        self._df_seeds_T1 = df_seeds[[Columns.SEASON, Columns.TEAM_ID, Columns.SEED]].copy()
+        self._df_seeds_T2 = df_seeds[[Columns.SEASON, Columns.TEAM_ID, Columns.SEED]].copy()
+        self._df_seeds_T1.columns = [Columns.SEASON, Columns.T1_TEAM_ID, Columns.T1_SEED]
+        self._df_seeds_T2.columns = [Columns.SEASON, Columns.T2_TEAM_ID, Columns.T2_SEED]
 
         # Select relevant columns and add seed difference
         df_tourney = self._prepare_detailed_results(detailed_tourney_results())
-        df_tourney = df_tourney[["Season", "T1_TeamID", "T2_TeamID", "PointDiff", "Target", "MenWomen"]]
-        df_tourney = pd.merge(df_tourney, self._df_seeds_T1, on=["Season", "T1_TeamID"], how="left")
-        df_tourney = pd.merge(df_tourney, self._df_seeds_T2, on=["Season", "T2_TeamID"], how="left")
-        df_tourney["SeedDiff"] = df_tourney["T2_seed"] - df_tourney["T1_seed"]
+        df_tourney = df_tourney[
+            [
+                Columns.SEASON,
+                Columns.T1_TEAM_ID,
+                Columns.T2_TEAM_ID,
+                Columns.POINT_DIFF,
+                Columns.TARGET,
+                Columns.MEN_WOMEN,
+            ]
+        ]
+        df_tourney = pd.merge(df_tourney, self._df_seeds_T1, on=[Columns.SEASON, Columns.T1_TEAM_ID], how="left")
+        df_tourney = pd.merge(df_tourney, self._df_seeds_T2, on=[Columns.SEASON, Columns.T2_TEAM_ID], how="left")
+        df_tourney[Columns.SEED_DIFF] = df_tourney[Columns.T2_SEED] - df_tourney[Columns.T1_SEED]
 
         # Merge with team stats
-        df_tourney = pd.merge(df_tourney, self._df_season_stats_T1, on=["Season", "T1_TeamID"], how="left")
-        df_tourney = pd.merge(df_tourney, self._df_season_stats_T2, on=["Season", "T2_TeamID"], how="left")
+        df_tourney = pd.merge(df_tourney, self._df_season_stats_T1, on=[Columns.SEASON, Columns.T1_TEAM_ID], how="left")
+        df_tourney = pd.merge(df_tourney, self._df_season_stats_T2, on=[Columns.SEASON, Columns.T2_TEAM_ID], how="left")
 
         # Prepare and merge team quality data
         df_quality = team_quality()
         self._df_quality_t1 = df_quality.copy()
         self._df_quality_t1.columns = [
-            x.replace("Quality", "T1_Quality").replace("TeamID", "T1_TeamID") for x in list(self._df_quality_t1.columns)
+            x.replace(Columns.QUALITY, Columns.T1_QUALITY).replace(Columns.TEAM_ID, Columns.T1_TEAM_ID)
+            for x in list(self._df_quality_t1.columns)
         ]
         self._df_quality_t2 = df_quality.copy()
         self._df_quality_t2.columns = [
-            x.replace("Quality", "T2_Quality").replace("TeamID", "T2_TeamID") for x in list(self._df_quality_t2.columns)
+            x.replace(Columns.QUALITY, Columns.T2_QUALITY).replace(Columns.TEAM_ID, Columns.T2_TEAM_ID)
+            for x in list(self._df_quality_t2.columns)
         ]
-        df_tourney = pd.merge(df_tourney, self._df_quality_t1, on=["Season", "T1_TeamID"], how="left")
-        df_tourney = pd.merge(df_tourney, self._df_quality_t2, on=["Season", "T2_TeamID"], how="left")
-        df_tourney["QualityDiff"] = df_tourney["T2_Quality"] - df_tourney["T1_Quality"]
+        df_tourney = pd.merge(df_tourney, self._df_quality_t1, on=[Columns.SEASON, Columns.T1_TEAM_ID], how="left")
+        df_tourney = pd.merge(df_tourney, self._df_quality_t2, on=[Columns.SEASON, Columns.T2_TEAM_ID], how="left")
+        df_tourney[Columns.QUALITY_DIFF] = df_tourney[Columns.T2_QUALITY] - df_tourney[Columns.T1_QUALITY]
 
         # Store final tournament data
         self._data = df_tourney
@@ -163,7 +192,7 @@ class SeasonAverageDataLoader(FeatureSelectionDataLoader):
         )
         return (
             self._data.loc[mask, self._features],
-            self._data.loc[mask, "Target"].squeeze(),
+            self._data.loc[mask, Columns.TARGET].squeeze(),
         )
 
     def valid_data(self) -> tuple[pd.DataFrame, pd.Series]:
@@ -180,7 +209,7 @@ class SeasonAverageDataLoader(FeatureSelectionDataLoader):
         )
         return (
             self._data.loc[mask, self._features],
-            self._data.loc[mask, "Target"].squeeze(),
+            self._data.loc[mask, Columns.TARGET].squeeze(),
         )
 
     def test_data(self, df_matchups: pd.DataFrame) -> pd.DataFrame:
@@ -203,20 +232,20 @@ class SeasonAverageDataLoader(FeatureSelectionDataLoader):
         Add all engineered features to a matchups DataFrame for prediction.
         Includes team stats, seeds, quality, and derived features.
         """
-        df["Season"] = df["ID"].apply(lambda t: int(t.split("_")[0]))
+        df[Columns.SEASON] = df[Columns.ID].apply(lambda t: int(t.split("_")[0]))
         df.columns = [x.replace("Lower", "T1_Team").replace("Higher", "T2_Team") for x in list(df.columns)]
-        df["MenWomen"] = df["T1_TeamID"].apply(lambda t: 0 if str(t)[0] == "1" else 1)
-        df = pd.merge(df, self._df_season_stats_T1, on=["Season", "T1_TeamID"], how="left")
-        df = pd.merge(df, self._df_season_stats_T2, on=["Season", "T2_TeamID"], how="left")
-        df = pd.merge(df, self._df_seeds_T1, on=["Season", "T1_TeamID"], how="left")
-        df = pd.merge(df, self._df_seeds_T2, on=["Season", "T2_TeamID"], how="left")
-        df = pd.merge(df, self._df_quality_t1, on=["Season", "T1_TeamID"], how="left")
-        df = pd.merge(df, self._df_quality_t2, on=["Season", "T2_TeamID"], how="left")
-        df["T1_seed"] = df["T1_seed"].fillna(32)
-        df["T2_seed"] = df["T2_seed"].fillna(32)
-        df["PointDiff"] = df["T1_avg_Score"] - df["T2_avg_Score"]
-        df["SeedDiff"] = df["T2_seed"] - df["T1_seed"]
-        df["QualityDiff"] = df["T2_Quality"] - df["T1_Quality"]
+        df[Columns.MEN_WOMEN] = df[Columns.T1_TEAM_ID].apply(lambda t: 0 if str(t)[0] == "1" else 1)
+        df = pd.merge(df, self._df_season_stats_T1, on=[Columns.SEASON, Columns.T1_TEAM_ID], how="left")
+        df = pd.merge(df, self._df_season_stats_T2, on=[Columns.SEASON, Columns.T2_TEAM_ID], how="left")
+        df = pd.merge(df, self._df_seeds_T1, on=[Columns.SEASON, Columns.T1_TEAM_ID], how="left")
+        df = pd.merge(df, self._df_seeds_T2, on=[Columns.SEASON, Columns.T2_TEAM_ID], how="left")
+        df = pd.merge(df, self._df_quality_t1, on=[Columns.SEASON, Columns.T1_TEAM_ID], how="left")
+        df = pd.merge(df, self._df_quality_t2, on=[Columns.SEASON, Columns.T2_TEAM_ID], how="left")
+        df[Columns.T1_SEED] = df[Columns.T1_SEED].fillna(32)
+        df[Columns.T2_SEED] = df[Columns.T2_SEED].fillna(32)
+        df[Columns.POINT_DIFF] = df["T1_avg_Score"] - df["T2_avg_Score"]
+        df[Columns.SEED_DIFF] = df[Columns.T2_SEED] - df[Columns.T1_SEED]
+        df[Columns.QUALITY_DIFF] = df[Columns.T2_QUALITY] - df[Columns.T1_QUALITY]
         return df
 
     def _prepare_detailed_results(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -224,10 +253,14 @@ class SeasonAverageDataLoader(FeatureSelectionDataLoader):
         Prepare detailed results by normalizing stats, swapping team perspectives,
         and computing point differentials and targets.
         """
-        df = df[list(set(df.columns).difference({"WLoc"}))]
+        df = df[list(set(df.columns).difference({Columns.WLOC}))]
 
-        adjot = (40 + 5 * df["NumOT"]) / 40
-        adjcols = list(set(df.columns).difference({"DayNum", "LTeamID", "NumOT", "Season", "WTeamID"}))
+        adjot = (40 + 5 * df[Columns.NUM_OT]) / 40
+        adjcols = list(
+            set(df.columns).difference(
+                {Columns.DAY_NUM, Columns.LTEAM_ID, Columns.NUM_OT, Columns.SEASON, Columns.WTEAM_ID}
+            )
+        )
         for col in adjcols:
             df[col] = df[col] / adjot
 
@@ -235,9 +268,11 @@ class SeasonAverageDataLoader(FeatureSelectionDataLoader):
         df.columns = [x.replace("W", "T1_").replace("L", "T2_") for x in list(df.columns)]
         dfswap.columns = [x.replace("L", "T1_").replace("W", "T2_") for x in list(dfswap.columns)]
         output = pd.concat([df, dfswap]).reset_index(drop=True)
-        output["PointDiff"] = output["T1_Score"] - output["T2_Score"]
-        output["Target"] = (output["PointDiff"] > 0) * 1
-        output["MenWomen"] = (output["T1_TeamID"].apply(lambda t: str(t).startswith("1"))) * 1  # 0: women, 1: men
+        output[Columns.POINT_DIFF] = output["T1_Score"] - output["T2_Score"]
+        output[Columns.TARGET] = (output[Columns.POINT_DIFF] > 0) * 1
+        output[Columns.MEN_WOMEN] = (
+            output[Columns.T1_TEAM_ID].apply(lambda t: str(t).startswith("1"))
+        ) * 1  # 0: women, 1: men
         return output
 
     def _prepare_additional_features(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -247,14 +282,14 @@ class SeasonAverageDataLoader(FeatureSelectionDataLoader):
         """
         columns = set(df.columns)
         columns &= {
-            "Season",
-            "DayNum",
-            "LTeamID",
-            "WTeamID",
-            "WElo",
-            "LElo",
-            "WEloDelta",
-            "LEloDelta",
+            Columns.SEASON,
+            Columns.DAY_NUM,
+            Columns.LTEAM_ID,
+            Columns.WTEAM_ID,
+            Columns.WELO,
+            Columns.LELO,
+            Columns.WELO_DELTA,
+            Columns.LELO_DELTA,
             "WStreak",
             "LStreak",
         }
@@ -264,11 +299,11 @@ class SeasonAverageDataLoader(FeatureSelectionDataLoader):
         df.columns = [x.replace("W", "T1_").replace("L", "T2_") for x in list(df.columns)]
         dfswap.columns = [x.replace("L", "T1_").replace("W", "T2_") for x in list(dfswap.columns)]
         output = pd.concat([df, dfswap]).reset_index(drop=True)
-        if any("Elo" in col for col in output.columns):
-            output["EloDiff"] = output["T1_Elo"] - output["T2_Elo"]
-            output["EloDeltaDiff"] = output["T1_EloDelta"] - output["T2_EloDelta"]
-        if any("Streak" in col for col in output.columns):
-            output["StreakDiff"] = output["T1_Streak"] - output["T2_Streak"]
-        if any("Quality" in col for col in output.columns):
-            output["QualityDiff"] = output["T1_Quality"] - output["T2_Quality"]
+        if any(Columns.ELO in col for col in output.columns):
+            output[Columns.ELO_DIFF] = output[Columns.T1_ELO] - output[Columns.T2_ELO]
+            output[Columns.ELO_DELTA_DIFF] = output["T1_EloDelta"] - output["T2_EloDelta"]
+        if any(Columns.STREAK in col for col in output.columns):
+            output[Columns.STREAK_DIFF] = output[Columns.T1_STREAK] - output[Columns.T2_STREAK]
+        if any(Columns.QUALITY in col for col in output.columns):
+            output[Columns.QUALITY_DIFF] = output[Columns.T1_QUALITY] - output[Columns.T2_QUALITY]
         return output

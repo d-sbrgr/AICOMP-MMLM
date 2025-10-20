@@ -2,7 +2,7 @@ from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
-import xgboost as xgb
+from sklearn.linear_model import LogisticRegression
 
 from ...dataloaders.base_dataloader import BaseDataloader
 from ...evaluation import brier_score
@@ -11,23 +11,26 @@ from ...utils.constants import Columns, Metrics
 from ..cross_validation.cv_config import CrossValidationConfig
 from ..cross_validation.cv_runner import CVRunner
 from ..model import SupervisedModel
-from .config import XGBHyperparamConfig
+from .config import LogisticRegressionHyperparamConfig
 
 
-class XGBRegressorModel(SupervisedModel):
+class LogisticRegressionModel(SupervisedModel):
     """
-    A wrapper class to train and validate xgboost models.
+    A wrapper class to train and validate Logistic Regression models using scikit-learn.
+
+    Note: While LogisticRegression is typically a classifier, we use it here for probability
+    prediction in a regression context (predicting win probability between 0 and 1).
     """
 
     def __init__(
         self,
         data: BaseDataloader,
-        params: XGBHyperparamConfig,
+        params: LogisticRegressionHyperparamConfig,
         cv: CrossValidationConfig | None,
         tracker: Tracker,
     ) -> None:
         super().__init__(data, params, cv, tracker)
-        self.model: xgb.Booster | None = None
+        self.model: LogisticRegression | None = None
 
     def fit(self, season: int, start_season: int = 2003) -> None:
         """
@@ -45,11 +48,13 @@ class XGBRegressorModel(SupervisedModel):
 
         self._do_cross_validation(X, y)
 
-        dtrain = xgb.DMatrix(X, label=y.values)
-        self.model = xgb.train(
-            self.params.as_params(), dtrain, num_boost_round=self.params.num_rounds, verbose_eval=False
-        )
-        preds = self.model.predict(dtrain)
+        self.model = LogisticRegression(**self.params.as_params())
+
+        y_binary = (y.values >= 0.5).astype(int)
+        self.model.fit(X, y_binary)
+
+        preds = self.model.predict_proba(X)[:, 1]
+        preds = np.clip(preds, 0, 1)
         self.tracker.log({Metrics.TRAIN_BRIER: brier_score(y.values, preds)})
 
     def validate(self):
@@ -59,11 +64,12 @@ class XGBRegressorModel(SupervisedModel):
         Note:
             Fit must be called beforehand
         """
-        assert self.model is not None, "Call fit() before predict()"
+        assert self.model is not None, "Call fit() before validate()"
         X, y = self.data.valid_data()
         X = self._drop_and_sort_features(X)
-        dvalid = xgb.DMatrix(X)
-        preds = self.model.predict(dvalid)
+
+        preds = self.model.predict_proba(X)[:, 1]
+        preds = np.clip(preds, 0, 1)
         self.tracker.log({Metrics.VALID_BRIER: brier_score(y.values, preds)})
 
     def predict(self, matchups: pd.DataFrame) -> Iterable[float]:
@@ -78,8 +84,9 @@ class XGBRegressorModel(SupervisedModel):
         assert self.model is not None, "Call fit() before predict()"
         X = self.data.test_data(matchups)
         X = self._drop_and_sort_features(X)
-        dtest = xgb.DMatrix(X)
-        preds = self.model.predict(dtest)
+
+        preds = self.model.predict_proba(X)[:, 1]
+        preds = np.clip(preds, 0, 1)
         return pd.Series(preds, index=X.index)
 
     def _drop_and_sort_features(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -96,17 +103,19 @@ class XGBRegressorModel(SupervisedModel):
         out_of_frame = np.zeros(len(y))
 
         for fold, (tr_idx, va_idx) in enumerate(splits):
-            dtrain = xgb.DMatrix(X.iloc[tr_idx], label=y.values[tr_idx])
-            dvalid = xgb.DMatrix(X.iloc[va_idx], label=y.values[va_idx])
-            evallist = [(dtrain, "train"), (dvalid, "valid")]
-            booster = xgb.train(
-                self.params.as_params(),
-                dtrain,
-                num_boost_round=self.params.num_rounds,
-                evals=evallist,
-                verbose_eval=False,
-            )
-            preds = booster.predict(dvalid)
+            lr_model = LogisticRegression(**self.params.as_params())
+
+            # Convert to binary labels for training
+            y_binary = (y.values >= 0.5).astype(int)
+            lr_model.fit(X.iloc[tr_idx], y_binary[tr_idx])
+
+            # Get probability predictions
+            preds = lr_model.predict_proba(X.iloc[va_idx])[:, 1]
+            preds = np.clip(preds, 0, 1)
             out_of_frame[va_idx] = preds
-            self.tracker.log({Metrics.FOLD: fold, Metrics.TRAIN_BRIER_CV_FOLD: brier_score(y.values[va_idx], preds)})
-        self.tracker.log({Metrics.TRAIN_BRIER_CV_FULL: brier_score(y.values, out_of_frame)})
+
+            fold_score = brier_score(y.values[va_idx], preds)
+            self.tracker.log({f"{Metrics.CV_BRIER}/fold_{fold}": fold_score})
+
+        cv_score = brier_score(y.values, out_of_frame)
+        self.tracker.log({Metrics.CV_BRIER: cv_score})
