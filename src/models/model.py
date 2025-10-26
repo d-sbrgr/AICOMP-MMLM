@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 
 from ..dataloaders.base_dataloader import BaseDataloader
 from ..experiments import Tracker
@@ -68,6 +69,7 @@ class SupervisedModel(Model):
         params: HyperparamConfig,
         cv: CrossValidationConfig | None,
         tracker: Tracker,
+        scaler: StandardScaler | MinMaxScaler | RobustScaler | None = None,
     ) -> None:
         """
         Initialize a supervised model with standardized components.
@@ -83,3 +85,30 @@ class SupervisedModel(Model):
         self.params = params
         self.cv_cfg = cv
         self.tracker = tracker
+        self._scaler = scaler
+
+    def _fit_scaler(self, X: pd.DataFrame) -> None:
+        """Fit the scaler on training data.
+
+        Args:
+            X: Training features (after dropping ID columns)
+        """
+        if self._scaler is None:
+            return
+
+        self._scaler.fit(X)
+
+    def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Apply scaling transformation to features.
+
+        Args:
+            X: Features to transform
+
+        Returns:
+            Scaled features as DataFrame with same structure
+        """
+        if self._scaler is None:
+            return X
+
+        X_scaled = self._scaler.transform(X)
+        return pd.DataFrame(X_scaled, columns=X.columns, index=X.index)
