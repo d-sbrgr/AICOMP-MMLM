@@ -2,6 +2,8 @@
 
 import wandb
 
+from src.dataloaders.simple.weighted_season_avg_dataloader import WeightedSeasonAvgDataLoader
+
 from ...dataloaders.base_dataloader import BaseDataloader
 from ...dataloaders.simple import FeatureSelectionDataLoader, SeasonAverageDataLoader
 from ...experiments import ExperimentConfig, Tracker, WandbTracker
@@ -84,7 +86,12 @@ def _get_data_loader(run_config: RunConfig) -> BaseDataloader:
     data_loader_map = {
         "season_average": SeasonAverageDataLoader,
         "feature_selection": FeatureSelectionDataLoader,
+        "weighted_season_average": WeightedSeasonAvgDataLoader,
     }
 
     loader_cls = data_loader_map.get(run_config.data_loader, SeasonAverageDataLoader)
-    return loader_cls(run_config.num_features)
+
+    data_loader_config = run_config.data_loader_config
+    if data_loader_config is None:
+        return loader_cls(run_config.num_features)
+    return loader_cls(run_config.num_features, **data_loader_config)

@@ -17,6 +17,7 @@ class RunConfig:
     valid_season: int = 2024
     start_season: int = 2003
     data_loader: str = "season_average"
+    data_loader_config: dict = None
 
 
 def get_run_name(hyperparameters: HyperparamConfig, run_config: RunConfig) -> str:

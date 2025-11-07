@@ -56,6 +56,11 @@ class Columns:
     T1_QUALITY = "T1_Quality"
     T2_QUALITY = "T2_Quality"
     LAST_ELO = "LastElo"
+    GAME_WEIGHT = "GameWeight"
+    T1_SCORE = "T1_Score"
+    T2_SCORE = "T2_Score"
+    W_STREAK = "WStreak"
+    L_STREAK = "LStreak"
 
 
 class Metrics:
