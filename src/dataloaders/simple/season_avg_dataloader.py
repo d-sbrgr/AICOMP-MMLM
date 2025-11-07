@@ -10,6 +10,7 @@ from src.datasets.datasets import (
 )
 from src.utils.constants import Columns
 
+from .common import prepare_detailed_results, prepare_engineered_features
 from .feature_selection_dataloader import FeatureSelectionDataLoader
 
 
@@ -52,16 +53,16 @@ class SeasonAverageDataLoader(FeatureSelectionDataLoader):
         attach last ELO, seeds, and quality features for each team, and store the final tournament data.
         """
         # Prepare regular season data with detailed results and additional features
-        df_regular = self._prepare_detailed_results(detailed_regular_season_results())
+        df_regular = prepare_detailed_results(detailed_regular_season_results())
         df_regular = pd.merge(
             df_regular,
-            self._prepare_additional_features(overall_elo_delta()),
+            prepare_engineered_features(overall_elo_delta()),
             on=[Columns.SEASON, Columns.DAY_NUM, Columns.T1_TEAM_ID, Columns.T2_TEAM_ID],
             how="left",
         )
         df_regular = pd.merge(
             df_regular,
-            self._prepare_additional_features(regular_season_streaks()),
+            prepare_engineered_features(regular_season_streaks()),
             on=[Columns.SEASON, Columns.DAY_NUM, Columns.T1_TEAM_ID, Columns.T2_TEAM_ID],
             how="left",
         )
@@ -130,7 +131,7 @@ class SeasonAverageDataLoader(FeatureSelectionDataLoader):
         self._df_seeds_T2.columns = [Columns.SEASON, Columns.T2_TEAM_ID, Columns.T2_SEED]
 
         # Select relevant columns and add seed difference
-        df_tourney = self._prepare_detailed_results(detailed_tourney_results())
+        df_tourney = prepare_detailed_results(detailed_tourney_results())
         df_tourney = df_tourney[
             [
                 Columns.SEASON,
@@ -247,63 +248,3 @@ class SeasonAverageDataLoader(FeatureSelectionDataLoader):
         df[Columns.SEED_DIFF] = df[Columns.T2_SEED] - df[Columns.T1_SEED]
         df[Columns.QUALITY_DIFF] = df[Columns.T2_QUALITY] - df[Columns.T1_QUALITY]
         return df
-
-    def _prepare_detailed_results(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Prepare detailed results by normalizing stats, swapping team perspectives,
-        and computing point differentials and targets.
-        """
-        df = df[list(set(df.columns).difference({Columns.WLOC}))]
-
-        adjot = (40 + 5 * df[Columns.NUM_OT]) / 40
-        adjcols = list(
-            set(df.columns).difference(
-                {Columns.DAY_NUM, Columns.LTEAM_ID, Columns.NUM_OT, Columns.SEASON, Columns.WTEAM_ID}
-            )
-        )
-        for col in adjcols:
-            df[col] = df[col] / adjot
-
-        dfswap = df.copy()
-        df.columns = [x.replace("W", "T1_").replace("L", "T2_") for x in list(df.columns)]
-        dfswap.columns = [x.replace("L", "T1_").replace("W", "T2_") for x in list(dfswap.columns)]
-        output = pd.concat([df, dfswap]).reset_index(drop=True)
-        output[Columns.POINT_DIFF] = output["T1_Score"] - output["T2_Score"]
-        output[Columns.TARGET] = (output[Columns.POINT_DIFF] > 0) * 1
-        output[Columns.MEN_WOMEN] = (
-            output[Columns.T1_TEAM_ID].apply(lambda t: str(t).startswith("1"))
-        ) * 1  # 0: women, 1: men
-        return output
-
-    def _prepare_additional_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Prepare and swap additional features (ELO, streaks, quality) for merging into main data.
-        Computes feature differences for each matchup.
-        """
-        columns = set(df.columns)
-        columns &= {
-            Columns.SEASON,
-            Columns.DAY_NUM,
-            Columns.LTEAM_ID,
-            Columns.WTEAM_ID,
-            Columns.WELO,
-            Columns.LELO,
-            Columns.WELO_DELTA,
-            Columns.LELO_DELTA,
-            "WStreak",
-            "LStreak",
-        }
-        df = df[list(columns)]
-
-        dfswap = df.copy()
-        df.columns = [x.replace("W", "T1_").replace("L", "T2_") for x in list(df.columns)]
-        dfswap.columns = [x.replace("L", "T1_").replace("W", "T2_") for x in list(dfswap.columns)]
-        output = pd.concat([df, dfswap]).reset_index(drop=True)
-        if any(Columns.ELO in col for col in output.columns):
-            output[Columns.ELO_DIFF] = output[Columns.T1_ELO] - output[Columns.T2_ELO]
-            output[Columns.ELO_DELTA_DIFF] = output["T1_EloDelta"] - output["T2_EloDelta"]
-        if any(Columns.STREAK in col for col in output.columns):
-            output[Columns.STREAK_DIFF] = output[Columns.T1_STREAK] - output[Columns.T2_STREAK]
-        if any(Columns.QUALITY in col for col in output.columns):
-            output[Columns.QUALITY_DIFF] = output[Columns.T1_QUALITY] - output[Columns.T2_QUALITY]
-        return output
