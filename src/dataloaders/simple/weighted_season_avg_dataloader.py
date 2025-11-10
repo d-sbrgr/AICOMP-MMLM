@@ -11,7 +11,7 @@ from src.datasets.datasets import (
 )
 from src.utils.constants import Columns
 
-from .common import prepare_detailed_results, prepare_engineered_features
+from .common import generate_perspectives, prepare_detailed_results, prepare_engineered_features
 from .feature_selection_dataloader import FeatureSelectionDataLoader
 
 
@@ -144,7 +144,7 @@ class WeightedSeasonAvgDataLoader(FeatureSelectionDataLoader):
         self._stats = df_season_stats
 
         # Prepare team stats for merging (T1 and T2 perspectives)
-        df_T1_stats, df_T2_stats = self._generate_perspectives(df_season_stats)
+        df_T1_stats, df_T2_stats = generate_perspectives(df_season_stats)
         self._df_season_stats_T1 = df_T1_stats
         self._df_season_stats_T2 = df_T2_stats
 
@@ -169,39 +169,6 @@ class WeightedSeasonAvgDataLoader(FeatureSelectionDataLoader):
         df_matchups[Columns.SEED_DIFF] = df_matchups[Columns.T2_SEED] - df_matchups[Columns.T1_SEED]
         df_matchups[Columns.QUALITY_DIFF] = df_matchups[Columns.T2_QUALITY] - df_matchups[Columns.T1_QUALITY]
         return df_matchups
-
-    def _generate_perspectives(self, df_season_stats: pd.DataFrame) -> pd.DataFrame:
-        df_season_stats_T1 = df_season_stats.copy()
-        df_season_stats_T1.columns = [
-            "T1_avg_" + x.replace("T1_", "").replace("T2_", "opponent_") for x in list(df_season_stats_T1.columns)
-        ]
-        df_season_stats_T1 = df_season_stats_T1.rename(
-            {
-                "T1_avg_Season": Columns.SEASON,
-                "T1_avg_TeamID": Columns.T1_TEAM_ID,
-                "T1_avg_LastElo": Columns.T1_ELO,
-                "T1_avg_Quality": Columns.T1_QUALITY,
-                "T1_avg_Seed": Columns.T1_SEED,
-            },
-            axis=1,
-        )
-
-        df_season_stats_T2 = df_season_stats.copy()
-        df_season_stats_T2.columns = [
-            "T2_avg_" + x.replace("T1_", "").replace("T2_", "opponent_") for x in list(df_season_stats_T2.columns)
-        ]
-        df_season_stats_T2 = df_season_stats_T2.rename(
-            {
-                "T2_avg_Season": Columns.SEASON,
-                "T2_avg_TeamID": Columns.T2_TEAM_ID,
-                "T2_avg_LastElo": Columns.T2_ELO,
-                "T2_avg_Quality": Columns.T2_QUALITY,
-                "T2_avg_Seed": Columns.T2_SEED,
-            },
-            axis=1,
-        )
-
-        return df_season_stats_T1, df_season_stats_T2
 
     def _add_quality_to_stats(self, df_quality: pd.DataFrame, df_season_stats: pd.DataFrame) -> pd.DataFrame:
         return pd.merge(df_season_stats, df_quality, on=[Columns.SEASON, Columns.TEAM_ID], how="left")

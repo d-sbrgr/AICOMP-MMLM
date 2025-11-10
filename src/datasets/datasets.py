@@ -51,6 +51,9 @@ STREAKS = "RegularSeasonResultsWithStreaks"
 # Quality
 QUALITY = "TeamQualitySeasonal"
 
+# Sliding Window Average Data
+SLIDING_WINDOW_AVERAGE = "SlidingWindowAverageData"
+
 
 def seeds() -> pd.DataFrame:
     m_seeds, w_seeds = seeds_per_gender(Gender.MEN), seeds_per_gender(Gender.WOMEN)
@@ -259,3 +262,7 @@ def team_quality_per_gender(gender: Gender) -> pd.DataFrame:
 def team_quality() -> pd.DataFrame:
     m_quality, w_quality = team_quality_per_gender(Gender.MEN), team_quality_per_gender(Gender.WOMEN)
     return pd.concat([m_quality, w_quality])
+
+
+def sliding_window_average() -> pd.DataFrame:
+    return get_data(SLIDING_WINDOW_AVERAGE)
