@@ -122,6 +122,122 @@ DEFAULT_FEATURES = [
 ]
 
 
+SLIDING_WINDOW_FEATURES = [
+    "QualityDiff",
+    "EloDiff",
+    "T2_avg_EloDiff",
+    "T1_avg_EloDiff",
+    "EloDeltaDiff",
+    "T2_avg_EloDelta",
+    "T1_avg_EloDelta",
+    "T1_Elo",
+    "T1_avg_PointDiff",
+    "T2_Elo",
+    "T1_avg_opponent_OR",
+    "T2_avg_PointDiff",
+    "T1_EloDelta",
+    "T2_avg_opponent_OR",
+    "T2_EloDelta",
+    "PointDiff",
+    "T1_avg_opponent_FGM3",
+    "T2_avg_DR",
+    "T1_avg_opponent_FGA",
+    "T2_avg_opponent_FGM3",
+    "T1_avg_DR",
+    "T1_avg_opponent_FGA3",
+    "T1_avg_Blk",
+    "T2_avg_Blk",
+    "T2_avg_opponent_FGA3",
+    "T1_avg_Elo",
+    "T1_avg_opponent_Elo",
+    "T2_avg_opponent_FGA",
+    "T2_avg_Elo",
+    "T1_avg_opponent_EloDelta",
+    "T1_avg_EloDeltaDiff",
+    "T2_avg_opponent_Elo",
+    "T1_avg_Ast",
+    "T2_avg_OR",
+    "T1_avg_OR",
+    "T2_avg_opponent_EloDelta",
+    "T2_avg_FGA3",
+    "T1_avg_opponent_Blk",
+    "T2_avg_EloDeltaDiff",
+    "T1_avg_FGA3",
+    "T1_avg_FGA",
+    "T2_avg_opponent_Blk",
+    "T2_avg_opponent_Stl",
+    "T2_avg_Ast",
+    "T1_avg_FTM",
+    "T1_Quality",
+    "T1_avg_opponent_Ast",
+    "T1_avg_opponent_Stl",
+    "T1_avg_opponent_FTM",
+    "T2_avg_PF",
+    "T2_avg_FGA",
+    "T1_avg_PF",
+    "T1_avg_Stl",
+    "T1_avg_opponent_TO",
+    "T2_avg_opponent_DR",
+    "T1_avg_opponent_DR",
+    "T2_avg_opponent_Ast",
+    "T1_avg_FGM3",
+    "T1_avg_opponent_FGM",
+    "T1_avg_TO",
+    "T2_avg_opponent_Score",
+    "T2_avg_TO",
+    "T2_avg_opponent_FGM",
+    "T1_avg_opponent_Score",
+    "T1_avg_Score",
+    "T2_Quality",
+    "T2_avg_opponent_TO",
+    "T2_avg_FGM",
+    "T2_avg_opponent_FTM",
+    "T1_avg_FGM",
+    "T2_avg_FGM3",
+    "T2_avg_Stl",
+    "T2_avg_opponent_PF",
+    "T2_avg_FTM",
+    "T1_avg_FTA",
+    "T1_avg_opponent_PF",
+    "T1_avg_opponent_FTA",
+    "T2_avg_opponent_FTA",
+    "T2_avg_FTA",
+    "T2_avg_Score",
+    "MenWomen",
+]
+
+
+SLIDING_WINDOW_DEFAULT_FEATURES = [
+    "MenWomen",
+    "QualityDiff",
+    "SeedDiff",
+    "T1_Elo",
+    "T1_Quality",
+    "T1_avg_Blk",
+    "T1_avg_DR",
+    "T1_avg_FGA",
+    "T1_avg_OR",
+    "T1_avg_PF",
+    "T1_avg_PointDiff",
+    "T1_avg_Score",
+    "T1_avg_opponent_Blk",
+    "T1_avg_opponent_FGA",
+    "T1_avg_opponent_PF",
+    "T2_Elo",
+    "T2_Quality",
+    "T2_avg_Blk",
+    "T2_avg_DR",
+    "T2_avg_FGA",
+    "T2_avg_OR",
+    "T2_avg_PF",
+    "T2_avg_PointDiff",
+    "T2_avg_Score",
+    "T2_avg_opponent_Blk",
+    "T2_avg_opponent_FGA",
+    "T2_avg_opponent_PF",
+]
+
+
 class FeatureSelectionDataLoader(BaseDataloader):
     def __init__(self, num_features: int):
         self._features = self.get_features(num_features)
@@ -139,3 +255,11 @@ class FeatureSelectionDataLoader(BaseDataloader):
         if num_features == 0:
             return DEFAULT_FEATURES
         return list(FEATURES[: min(num_features, len(FEATURES))])
+
+
+class SlidingWindowFeatureSelectionDataLoader(FeatureSelectionDataLoader):
+    @staticmethod
+    def get_features(num_features: int) -> list[str]:
+        if num_features == 0:
+            return SLIDING_WINDOW_DEFAULT_FEATURES
+        return list(SLIDING_WINDOW_FEATURES[: min(num_features, len(SLIDING_WINDOW_FEATURES))])

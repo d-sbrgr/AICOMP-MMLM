@@ -90,3 +90,37 @@ def prepare_engineered_features(games: pd.DataFrame) -> pd.DataFrame:
         output[Columns.QUALITY_DIFF] = output[Columns.T1_QUALITY] - output[Columns.T2_QUALITY]
 
     return output
+
+
+def generate_perspectives(df_season_stats: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    df_season_stats_T1 = df_season_stats.copy()
+    df_season_stats_T1.columns = [
+        "T1_avg_" + x.replace("T1_", "").replace("T2_", "opponent_") for x in list(df_season_stats_T1.columns)
+    ]
+    df_season_stats_T1 = df_season_stats_T1.rename(
+        {
+            "T1_avg_Season": Columns.SEASON,
+            "T1_avg_TeamID": Columns.T1_TEAM_ID,
+            "T1_avg_LastElo": Columns.T1_ELO,
+            "T1_avg_Quality": Columns.T1_QUALITY,
+            "T1_avg_Seed": Columns.T1_SEED,
+        },
+        axis=1,
+    )
+
+    df_season_stats_T2 = df_season_stats.copy()
+    df_season_stats_T2.columns = [
+        "T2_avg_" + x.replace("T1_", "").replace("T2_", "opponent_") for x in list(df_season_stats_T2.columns)
+    ]
+    df_season_stats_T2 = df_season_stats_T2.rename(
+        {
+            "T2_avg_Season": Columns.SEASON,
+            "T2_avg_TeamID": Columns.T2_TEAM_ID,
+            "T2_avg_LastElo": Columns.T2_ELO,
+            "T2_avg_Quality": Columns.T2_QUALITY,
+            "T2_avg_Seed": Columns.T2_SEED,
+        },
+        axis=1,
+    )
+
+    return df_season_stats_T1, df_season_stats_T2

@@ -14,8 +14,11 @@ Quality is a statistical rating (in points) that estimates team strength based o
 - Separate models for men's and women's basketball
 """
 
+import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+from scipy.sparse import coo_matrix, hstack
+from scipy.sparse.linalg import lsmr
 
 from ..datasets.datasets import compact_regular_season_results_per_gender
 from ..utils.constants import Columns
@@ -151,6 +154,47 @@ def compute_quality(
     )
 
     return quality
+
+
+def fast_compute_quality(df: pd.DataFrame) -> pd.DataFrame:
+    """Compute-efficient implementation of `compute_quality`."""
+    df = df[[Columns.T1_TEAM_ID, Columns.T2_TEAM_ID, Columns.POINT_DIFF]].dropna()
+    if df.empty:
+        return pd.DataFrame(columns=[Columns.TEAM_ID, Columns.QUALITY])
+
+    # treat team IDs as strings to ensure deterministic ordering
+    t1 = df[Columns.T1_TEAM_ID].astype(str)
+    t2 = df[Columns.T2_TEAM_ID].astype(str)
+    teams = np.unique(np.concatenate([t1.values, t2.values]))
+    m = len(teams)
+    team_to_idx = {team: i for i, team in enumerate(teams)}
+    n = len(df)
+    rows = np.arange(n)
+
+    # build one-hot matrices for T1 and T2
+    c1 = np.array([team_to_idx[x] for x in t1])
+    c2 = np.array([team_to_idx[x] for x in t2])
+    X_T1 = coo_matrix((np.ones(n), (rows, c1)), shape=(n, m))
+    X_T2 = coo_matrix((np.ones(n), (rows, c2)), shape=(n, m))
+
+    # stacked design X = [X_T1 | X_T2]
+    X = hstack([X_T1, X_T2]).tocsr()
+    y = df[Columns.POINT_DIFF].to_numpy()
+
+    # minimum-norm solution to Xβ = y
+    beta = lsmr(X, y)[0]
+    q, r = beta[:m], beta[m:]
+
+    # identify the baseline team (statsmodels uses the lexicographically
+    # smallest team as the omitted category for T2)
+    baseline = min(teams)
+    shift = r[team_to_idx[baseline]]
+
+    # adjust the T1 block by the baseline T2 coefficient
+    q_adjusted = q + shift
+
+    out = pd.DataFrame({Columns.TEAM_ID: [int(t) for t in teams], Columns.QUALITY: q_adjusted})
+    return out.sort_values(Columns.TEAM_ID).reset_index(drop=True)
 
 
 def compute_team_quality_per_season(

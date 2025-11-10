@@ -48,6 +48,8 @@ class Columns:
     ELO = "Elo"
     T1_ELO = "T1_Elo"
     T2_ELO = "T2_Elo"
+    T1_ELO_DELTA = "T1_EloDelta"
+    T2_ELO_DELTA = "T2_EloDelta"
     ELO_DIFF = "EloDiff"
     ELO_DELTA_DIFF = "EloDeltaDiff"
     T1_SEED = "T1_seed"
