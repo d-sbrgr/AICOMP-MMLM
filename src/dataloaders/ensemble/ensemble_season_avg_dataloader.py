@@ -1,18 +1,20 @@
+from collections.abc import Generator
+
 import pandas as pd
 
 from src.utils.constants import Columns
 
-from ..base_dataloader import BaseDataloader
+from ..base_dataloader import EnsembleDataloader
 from ..base_season_average import BaseSeasonAverage
 from ..feature_selection import FeatureSelection
 
 
-class SeasonAverageDataLoader(FeatureSelection, BaseSeasonAverage, BaseDataloader):
+class EnsembleSeasonAverageDataLoader(FeatureSelection, BaseSeasonAverage, EnsembleDataloader):
     """
     Loads and prepares season-averaged features and metadata for XGBoost and random forest modeling.
 
     This class computes per-team season averages, merges additional features (ELO, streaks, seeds, quality),
-    and attaches the last ELO for each team in the regular season. It provides train, validation, and test data
+    and attaches the last ELO for each team in the regular season. It provides train and test data
     for model fitting and evaluation.
 
     Attributes:
@@ -29,7 +31,7 @@ class SeasonAverageDataLoader(FeatureSelection, BaseSeasonAverage, BaseDataloade
     """
 
     def __init__(self, num_features: int):
-        BaseDataloader.__init__(self)
+        EnsembleDataloader.__init__(self)
         FeatureSelection.__init__(self, num_features)
         BaseSeasonAverage.__init__(self)
         self._data: pd.DataFrame | None = None
@@ -49,16 +51,20 @@ class SeasonAverageDataLoader(FeatureSelection, BaseSeasonAverage, BaseDataloade
         """
         super().setup()
 
-    def train_data(self, prediction_season: int, start_season: int) -> tuple[pd.DataFrame, pd.Series]:
+    def train_data(
+        self, prediction_season: int, start_season: int
+    ) -> Generator[tuple[int, tuple[pd.DataFrame, pd.Series], ...], None, None]:
         """
-        Return training features and targets for all seasons before the prediction season.
+        Generator yielding training and validation data for season cross-validation.
+
+        One generator yield per target season lower than prediction_season and greater than or equal to start_season.
 
         Args:
             prediction_season (int): The season to predict (excluded from training).
             start_season (int): The first season contained in the training data.
 
-        Returns:
-            tuple[pd.DataFrame, pd.Series]: Training features and target values.
+        Yields:
+            tuple[int, tuple[pd.DataFrame, pd.Series], ...]: Target season, training data and validation data.
         """
         if prediction_season <= start_season:
             raise ValueError("prediction_season must be greater than minimum_season")
@@ -68,30 +74,27 @@ class SeasonAverageDataLoader(FeatureSelection, BaseSeasonAverage, BaseDataloade
             raise ValueError("minimum_season must be between 2003 and 2024")
         self._prediction_season = prediction_season
         self._start_season = start_season
-        mask = (self._data[Columns.SEASON] < self._prediction_season) & (
-            self._data[Columns.SEASON] >= self._start_season
-        )
-        return (
-            self._data.loc[mask, self._features],
-            self._data.loc[mask, Columns.TARGET].squeeze(),
-        )
-
-    def valid_data(self) -> tuple[pd.DataFrame, pd.Series]:
-        """
-        Return validation features and targets for the prediction season.
-
-        Returns:
-            tuple[pd.DataFrame, pd.Series]: Validation features and target values.
-        """
-        if not self._features:
-            raise RuntimeError("Must call train_data first")
-        mask = (self._data[Columns.SEASON] == self._prediction_season) & (
-            self._data[Columns.SEASON] >= self._start_season
-        )
-        return (
-            self._data.loc[mask, self._features],
-            self._data.loc[mask, Columns.TARGET].squeeze(),
-        )
+        for season in range(start_season, prediction_season):
+            if self._data[self._data[Columns.SEASON] == season].empty:
+                print(f"Warning: No data for season {season}, skipping fold.")
+                continue
+            train_mask = (
+                (self._data[Columns.SEASON] < self._prediction_season)
+                & (self._data[Columns.SEASON] >= self._start_season)
+                & (self._data[Columns.SEASON] != season)
+            )
+            valid_mask = self._data[Columns.SEASON] == season
+            yield (
+                season,
+                (
+                    self._data.loc[train_mask, self._features],
+                    self._data.loc[train_mask, Columns.TARGET].squeeze(),
+                ),
+                (
+                    self._data.loc[valid_mask, self._features],
+                    self._data.loc[valid_mask, Columns.TARGET].squeeze(),
+                ),
+            )
 
     def test_data(self, df_matchups: pd.DataFrame) -> pd.DataFrame:
         """

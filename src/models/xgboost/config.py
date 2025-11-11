@@ -18,6 +18,7 @@ class XGBHyperparamConfig(HyperparamConfig):
     gamma: float = 0.0
     max_depth: int = 6
     min_child_weight: float = 1.0
+    num_parallel_tree: int = 1
     max_delta_step: int = 0
     subsample: float = 0.8
     colsample_bytree: float = 0.8

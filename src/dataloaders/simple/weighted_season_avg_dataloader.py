@@ -11,11 +11,12 @@ from src.datasets.datasets import (
 )
 from src.utils.constants import Columns
 
-from .common import generate_perspectives, prepare_detailed_results, prepare_engineered_features
-from .feature_selection_dataloader import FeatureSelectionDataLoader
+from ..base_dataloader import BaseDataloader
+from ..common import generate_perspectives, prepare_detailed_results, prepare_engineered_features
+from ..feature_selection import FeatureSelection
 
 
-class WeightedSeasonAvgDataLoader(FeatureSelectionDataLoader):
+class WeightedSeasonAvgDataLoader(FeatureSelection, BaseDataloader):
     """
     Loads and prepares weighted rolling season-averaged features for modeling.
 
@@ -56,7 +57,8 @@ class WeightedSeasonAvgDataLoader(FeatureSelectionDataLoader):
                                 Remaining data becomes test set.
             random_seed (int): Random seed for reproducible splits (default: 42).
         """
-        super().__init__(num_features)
+        FeatureSelection.__init__(self, num_features)
+        BaseDataloader.__init__(self)
         self._data: pd.DataFrame | None = None
         self._train_data: pd.DataFrame | None = None
         self._valid_data: pd.DataFrame | None = None

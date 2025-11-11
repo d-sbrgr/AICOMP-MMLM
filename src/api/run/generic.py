@@ -2,13 +2,9 @@
 
 import wandb
 
-from ...dataloaders.base_dataloader import BaseDataloader
-from ...dataloaders.simple import (
-    FeatureSelectionDataLoader,
-    SeasonAverageDataLoader,
-    SlidingWindowAvgDataLoader,
-    WeightedSeasonAvgDataLoader,
-)
+from ...dataloaders.base_dataloader import BaseDataloader, EnsembleDataloader
+from ...dataloaders.ensemble import EnsembleSeasonAverageDataLoader
+from ...dataloaders.simple import SeasonAverageDataLoader, SlidingWindowAvgDataLoader, WeightedSeasonAvgDataLoader
 from ...experiments import ExperimentConfig, Tracker, WandbTracker
 from ...experiments.config import RunConfig, get_run_name
 from ...models.cross_validation.cv_config import CrossValidationConfig
@@ -69,7 +65,7 @@ def run_model(
     config = unflatten_config(run.config)
     run_config = RunConfig(**config.get("run_config", {}))
 
-    data_loader: BaseDataloader = _get_data_loader(run_config)
+    data_loader: BaseDataloader | EnsembleDataloader = _get_data_loader(run_config)
 
     hyperparameters = hyperparameter_cls(**config.get(config_key, {}))
 
@@ -88,7 +84,7 @@ def _get_data_loader(run_config: RunConfig) -> BaseDataloader:
     """Get the appropriate data loader based on run configuration."""
     data_loader_map = {
         "season_average": SeasonAverageDataLoader,
-        "feature_selection": FeatureSelectionDataLoader,
+        "season_average_ensemble": EnsembleSeasonAverageDataLoader,
         "weighted_season_average": WeightedSeasonAvgDataLoader,
         "sliding_window_average": SlidingWindowAvgDataLoader,
     }

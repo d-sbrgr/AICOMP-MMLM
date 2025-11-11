@@ -13,6 +13,7 @@ variables:
 stages:
   - lint
   - submit
+  - results
 
 ruff_format:
   stage: lint
@@ -45,3 +46,27 @@ submit_to_kaggle:
     - FILE="$SUBMISSION_DIR/$[[ inputs.filename ]]"
     - echo "Submitting $FILE to Kaggle..."
     - kaggle competitions submit -c $COMPETITION -f "$FILE" -m "Automated GitLab submission"
+
+
+fetch_kaggle_results:
+  stage: results
+  image: python:3.12
+  when: manual
+  needs:
+    - job: submit_to_kaggle
+      optional: true
+  before_script:
+    - pip install kaggle
+    - mkdir -p ~/.kaggle
+    - echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > ~/.kaggle/kaggle.json
+    - chmod 600 ~/.kaggle/kaggle.json
+  script:
+    - echo "Fetching submission results from Kaggle..."
+    - kaggle competitions submissions -c $COMPETITION > submissions.txt
+    - cat submissions.txt
+    - echo "Latest submission status:"
+    - head -n 2 submissions.txt
+  artifacts:
+    paths:
+      - submissions.txt
+    expire_in: 7 days
