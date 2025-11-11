@@ -5,13 +5,14 @@ from src.datasets.datasets import detailed_regular_season_results, overall_elo_d
 from src.features.quality import fast_compute_quality
 from src.utils.constants import Columns
 
-from .common import generate_perspectives, prepare_detailed_results, prepare_engineered_features
-from .feature_selection_dataloader import SlidingWindowFeatureSelectionDataLoader
+from ..base_dataloader import BaseDataloader
+from ..common import generate_perspectives, prepare_detailed_results, prepare_engineered_features
+from ..feature_selection import FeatureSelection
 
 MAX_REGULAR_SEASON_DAY = 132
 
 
-class SlidingWindowAvgDataLoader(SlidingWindowFeatureSelectionDataLoader):
+class SlidingWindowAvgDataLoader(FeatureSelection, BaseDataloader):
     """
     Loads and prepares weighted sliding-window averaged features for modeling.
 
@@ -44,7 +45,8 @@ class SlidingWindowAvgDataLoader(SlidingWindowFeatureSelectionDataLoader):
                                 Remaining data becomes test set.
             random_seed (int): Random seed for reproducible splits (default: 42).
         """
-        super().__init__(num_features)
+        FeatureSelection.__init__(self, num_features)
+        BaseDataloader.__init__(self)
         self._data: pd.DataFrame | None = None
         self._train_data: pd.DataFrame | None = None
         self._valid_data: pd.DataFrame | None = None
@@ -205,7 +207,7 @@ class SlidingWindowAvgDataLoader(SlidingWindowFeatureSelectionDataLoader):
         More recent games (closer to end of season) receive higher weights.
 
         Args:
-            df (pd.DataFrame): DataFrame with games including Season, DayNum, and GameWeight.
+            games (pd.DataFrame): DataFrame with games including Season, DayNum, and GameWeight.
 
         Returns:
             pd.DataFrame: DataFrame with updated GameWeight including time discount.
@@ -232,7 +234,7 @@ class SlidingWindowAvgDataLoader(SlidingWindowFeatureSelectionDataLoader):
         Formula: weighted_avg = sum(stat * weight) / sum(weight)
 
         Args:
-            df (pd.DataFrame): DataFrame with game data including GameWeight.
+            games (pd.DataFrame): DataFrame with game data including GameWeight.
 
         Returns:
             pd.DataFrame: Aggregated team statistics per season.

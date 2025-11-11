@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 
-from ...dataloaders.base_dataloader import BaseDataloader
+from ...dataloaders.base_dataloader import BaseDataloader, EnsembleDataloader
 from ...evaluation import brier_score
 from ...experiments import Tracker
 from ...utils.constants import Columns, Metrics
@@ -49,7 +49,7 @@ class XGBRegressorModel(SupervisedModel):
         self.model = xgb.train(
             self.params.as_params(), dtrain, num_boost_round=self.params.num_rounds, verbose_eval=False
         )
-        preds = self.model.predict(dtrain)
+        preds = np.clip(self.model.predict(dtrain), 0, 1)
         self.tracker.log({Metrics.TRAIN_BRIER: brier_score(y.values, preds)})
 
     def validate(self):
@@ -110,3 +110,78 @@ class XGBRegressorModel(SupervisedModel):
             out_of_frame[va_idx] = preds
             self.tracker.log({Metrics.FOLD: fold, Metrics.TRAIN_BRIER_CV_FOLD: brier_score(y.values[va_idx], preds)})
         self.tracker.log({Metrics.TRAIN_BRIER_CV_FULL: brier_score(y.values, out_of_frame)})
+
+
+class EnsembleXGBRegressorModel(SupervisedModel):
+    """
+    A wrapper class to train and validate ensemble xgboost models.
+    """
+
+    def __init__(
+        self,
+        data: EnsembleDataloader,
+        params: XGBHyperparamConfig,
+        cv: CrossValidationConfig | None,
+        tracker: Tracker,
+    ) -> None:
+        super().__init__(data, params, cv, tracker)
+        self.models: dict[int, xgb.Booster] = {}
+        self.scores: dict[int, tuple[float, float]] = {}
+
+    def fit(self, test_season: int, start_season: int = 2003) -> None:
+        """
+        Fit the model on data provided by the given dataloader.
+
+        The model is using data up to but not including the specified season.
+
+        Args:
+            test_season (int): Season for which the model should be validated.
+            start_season (int): Start season for which the model should be trained on.
+        """
+        self.data.setup()
+        for valid_season, (X_train, y_train), (X_valid, y_valid) in self.data.train_data(test_season, start_season):
+            X_train = self._drop_and_sort_features(X_train)
+            X_valid = self._drop_and_sort_features(X_valid)
+
+            dtrain = xgb.DMatrix(X_train, label=y_train.values)
+            dvalid = xgb.DMatrix(X_valid, label=y_valid.values)
+            self.models[valid_season] = xgb.train(
+                self.params.as_params(), dtrain, num_boost_round=self.params.num_rounds, verbose_eval=False
+            )
+            train_preds = np.clip(self.models[valid_season].predict(dtrain), 0, 1)
+            valid_preds = np.clip(self.models[valid_season].predict(dvalid), 0, 1)
+            self.scores[valid_season] = (
+                brier_score(y_train.values, train_preds),
+                brier_score(y_valid.values, valid_preds),
+            )
+            self.tracker.log({Metrics.TRAIN_ENSEMBLE_BRIER: self.scores[valid_season][0]}, step=valid_season)
+            self.tracker.log({Metrics.VALID_ENSEMBLE_BRIER: self.scores[valid_season][1]}, step=valid_season)
+        self.tracker.log({Metrics.TRAIN_BRIER: np.mean([scores[0] for scores in self.scores.values()])})
+        self.tracker.log({Metrics.VALID_BRIER: np.mean([scores[1] for scores in self.scores.values()])})
+
+    def validate(self):
+        """Validation is done during fit for ensemble models."""
+        pass
+
+    def predict(self, matchups: pd.DataFrame) -> Iterable[float]:
+        """
+        Make predictions for the given matchups.
+
+        Args:
+            matchups (pd.DataFrame): Matchups to make predictions for.
+        Note:
+            Fit must be called first.
+        """
+        assert self.models, "Call fit() before predict()"
+        X = self.data.test_data(matchups)
+        X = self._drop_and_sort_features(X)
+        dtest = xgb.DMatrix(X)
+        preds = [np.clip(model.predict(dtest), 0, 1) for model in self.models.values()]
+        preds = np.mean(preds, axis=0)
+        return pd.Series(preds, index=X.index)
+
+    @staticmethod
+    def _drop_and_sort_features(df: pd.DataFrame) -> pd.DataFrame:
+        id_cols = [Columns.SEASON, Columns.T1_TEAM_ID, Columns.T2_TEAM_ID]
+        df = df.drop(columns=[c for c in id_cols if c in df.columns])
+        return df

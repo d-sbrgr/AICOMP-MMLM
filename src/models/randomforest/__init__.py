@@ -1,7 +1,4 @@
 from .config import RandomForestHyperparamConfig
-from .model import RandomForestRegressorModel
+from .model import EnsembleRandomForestRegressorModel, RandomForestRegressorModel
 
-__all__ = [
-    "RandomForestHyperparamConfig",
-    "RandomForestRegressorModel",
-]
+__all__ = ["EnsembleRandomForestRegressorModel", "RandomForestHyperparamConfig", "RandomForestRegressorModel"]

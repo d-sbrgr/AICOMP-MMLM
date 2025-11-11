@@ -52,7 +52,7 @@ def prepare_engineered_features(games: pd.DataFrame) -> pd.DataFrame:
     Prepare and swap additional features (ELO, streaks, quality) for merging.
 
     Args:
-        df (pd.DataFrame): DataFrame with additional features.
+        games (pd.DataFrame): DataFrame with additional features.
 
     Returns:
         pd.DataFrame: Processed features with difference columns.

@@ -1,5 +1,3 @@
-from ..base_dataloader import BaseDataloader
-
 FEATURES = [
     "QualityDiff",
     "SeedDiff",
@@ -238,7 +236,7 @@ SLIDING_WINDOW_DEFAULT_FEATURES = [
 ]
 
 
-class FeatureSelectionDataLoader(BaseDataloader):
+class FeatureSelection:
     def __init__(self, num_features: int):
         self._features = self.get_features(num_features)
 
@@ -257,7 +255,7 @@ class FeatureSelectionDataLoader(BaseDataloader):
         return list(FEATURES[: min(num_features, len(FEATURES))])
 
 
-class SlidingWindowFeatureSelectionDataLoader(FeatureSelectionDataLoader):
+class SlidingWindowFeatureSelectionDataLoader(FeatureSelection):
     @staticmethod
     def get_features(num_features: int) -> list[str]:
         if num_features == 0:

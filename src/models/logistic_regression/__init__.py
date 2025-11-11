@@ -1,7 +1,4 @@
 from .config import LogisticRegressionHyperparamConfig
-from .model import LogisticRegressionModel
+from .model import EnsembleLogisticRegressorModel, LogisticRegressionModel
 
-__all__ = [
-    "LogisticRegressionHyperparamConfig",
-    "LogisticRegressionModel",
-]
+__all__ = ["EnsembleLogisticRegressorModel", "LogisticRegressionHyperparamConfig", "LogisticRegressionModel"]

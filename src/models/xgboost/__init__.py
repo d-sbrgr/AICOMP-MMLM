@@ -1,4 +1,4 @@
-__all__ = ["XGBHyperparamConfig", "XGBRegressorModel"]
+__all__ = ["EnsembleXGBRegressorModel", "XGBHyperparamConfig", "XGBRegressorModel"]
 
 from .config import XGBHyperparamConfig
-from .model import XGBRegressorModel
+from .model import EnsembleXGBRegressorModel, XGBRegressorModel

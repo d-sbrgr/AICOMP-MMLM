@@ -71,4 +71,7 @@ class Metrics:
     VALID_BRIER = f"valid_{BRIER}"
     TRAIN_BRIER_CV_FOLD = f"{TRAIN_BRIER}_cv_fold"
     TRAIN_BRIER_CV_FULL = f"{TRAIN_BRIER}_cv_full"
+    TRAIN_ENSEMBLE_BRIER = f"{TRAIN_BRIER}_ensemble"
+    VALID_ENSEMBLE_BRIER = f"{VALID_BRIER}_ensemble"
     FOLD = "fold"
+    SEASON = "season"

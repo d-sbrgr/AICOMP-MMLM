@@ -3,7 +3,7 @@ from collections.abc import Iterable
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 
-from ..dataloaders.base_dataloader import BaseDataloader
+from ..dataloaders.base_dataloader import BaseDataloader, EnsembleDataloader
 from ..experiments import Tracker
 from .cross_validation.cv_config import CrossValidationConfig
 from .hyperparam_config import HyperparamConfig
@@ -65,7 +65,7 @@ class SupervisedModel(Model):
 
     def __init__(
         self,
-        data: BaseDataloader,
+        data: BaseDataloader | EnsembleDataloader,
         params: HyperparamConfig,
         cv: CrossValidationConfig | None,
         tracker: Tracker,
