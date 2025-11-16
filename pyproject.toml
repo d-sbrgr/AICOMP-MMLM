@@ -24,6 +24,10 @@ dependencies = [
     "python-dotenv>=1.1.1",
     "pre-commit>=4.3.0",
     "catboost>=1.2.8",
+    "torch>=2.0.0",
+    "lightning>=2.0.0",
+    "dotenv>=0.9.9",
+    "ruff>=0.14.1",
 ]
 
 [dependency-groups]

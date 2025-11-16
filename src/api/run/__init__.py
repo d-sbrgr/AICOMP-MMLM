@@ -5,6 +5,7 @@ __all__ = [
     "run_logistic_regression",
     "run_logistic_regression_ensemble",
     "run_model",
+    "run_neural_network",
     "run_randomforest",
     "run_randomforest_ensemble",
     "run_svm",
@@ -16,6 +17,7 @@ __all__ = [
     "sweep_logistic_regression",
     "sweep_logistic_regression_ensemble",
     "sweep_model",
+    "sweep_neural_network",
     "sweep_randomforest",
     "sweep_randomforest_ensemble",
     "sweep_svm",
@@ -35,6 +37,7 @@ from .logistic_regression import (
     sweep_logistic_regression,
     sweep_logistic_regression_ensemble,
 )
+from .neural_network import run_neural_network, sweep_neural_network
 from .randomforest import run_randomforest, run_randomforest_ensemble, sweep_randomforest, sweep_randomforest_ensemble
 from .svm import run_svm, run_svm_ensemble, sweep_svm, sweep_svm_ensemble
 from .xgboost import run_xgboost, run_xgboost_ensemble, sweep_xgboost, sweep_xgboost_ensemble
