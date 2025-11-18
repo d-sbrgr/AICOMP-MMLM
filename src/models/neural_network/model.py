@@ -100,12 +100,28 @@ class NeuralNetworkModel(SupervisedModel):
                 mode="min",
                 save_last=True,
             ),
+            ModelCheckpoint(
+                monitor="val_brier",
+                dirpath="checkpoints",
+                filename="brier-nn-{epoch:02d}-{val_brier:.4f}",
+                save_top_k=3,
+                mode="min",
+                save_last=True,
+            ),
             LearningRateMonitor(logging_interval="epoch", log_momentum=True, log_weight_decay=True),
         ]
 
         if self.params.early_stopping:
             early_stop_callback = EarlyStopping(
                 monitor="val_loss",
+                min_delta=self.params.early_stopping_min_delta,
+                patience=self.params.early_stopping_patience,
+                verbose=False,
+                mode="min",
+            )
+            callbacks.append(early_stop_callback)
+            early_stop_callback = EarlyStopping(
+                monitor="val_brier",
                 min_delta=self.params.early_stopping_min_delta,
                 patience=self.params.early_stopping_patience,
                 verbose=False,

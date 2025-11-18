@@ -11,7 +11,8 @@ def entropy(probs: torch.Tensor) -> torch.Tensor:
     Args:
         probs: Predicted probabilities in [0, 1]
     """
-    return -(probs * torch.log(probs) + (1 - probs) * torch.log(1 - probs))
+    epsilon = 1e-15
+    return -(probs * torch.log(probs + epsilon) + (1 - probs) * torch.log(1 - probs + epsilon))
 
 
 class BCEWithEntropyLoss(nn.Module):
