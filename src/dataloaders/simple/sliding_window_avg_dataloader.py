@@ -7,12 +7,12 @@ from src.utils.constants import Columns
 
 from ..base_dataloader import BaseDataloader
 from ..common import generate_perspectives, prepare_detailed_results, prepare_engineered_features
-from ..feature_selection import FeatureSelection
+from ..feature_selection import SlidingWindowFeatureSelectionDataLoader
 
 MAX_REGULAR_SEASON_DAY = 132
 
 
-class SlidingWindowAvgDataLoader(FeatureSelection, BaseDataloader):
+class SlidingWindowAvgDataLoader(SlidingWindowFeatureSelectionDataLoader, BaseDataloader):
     """
     Loads and prepares weighted sliding-window averaged features for modeling.
 
@@ -45,7 +45,7 @@ class SlidingWindowAvgDataLoader(FeatureSelection, BaseDataloader):
                                 Remaining data becomes test set.
             random_seed (int): Random seed for reproducible splits (default: 42).
         """
-        FeatureSelection.__init__(self, num_features)
+        SlidingWindowFeatureSelectionDataLoader.__init__(self, num_features)
         BaseDataloader.__init__(self)
         self._data: pd.DataFrame | None = None
         self._train_data: pd.DataFrame | None = None

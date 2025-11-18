@@ -208,7 +208,6 @@ SLIDING_WINDOW_FEATURES = [
 SLIDING_WINDOW_DEFAULT_FEATURES = [
     "MenWomen",
     "QualityDiff",
-    "SeedDiff",
     "T1_Elo",
     "T1_Quality",
     "T1_avg_Blk",
