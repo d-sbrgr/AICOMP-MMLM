@@ -16,4 +16,6 @@ env.bak/
 venv.bak/
 wandb/
 
+_build/
+
 **.ckpt

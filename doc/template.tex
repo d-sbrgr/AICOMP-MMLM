@@ -1,0 +1,241 @@
+% ============================================================================
+% Document Class
+% ============================================================================
+$if(fontsize)$
+\documentclass[$fontsize$]{article}
+$else$
+\documentclass{article}
+$endif$
+
+% ============================================================================
+% Font Configuration (XeLaTeX)
+% ============================================================================
+\usepackage{fontspec}
+\usepackage{lmodern}
+
+% ============================================================================
+% Core Packages
+% ============================================================================
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{calc}
+\usepackage{datetime}
+\usepackage{makecell}
+
+% Define custom date format
+\newdateformat{customdate}{\THEDAY-\shortmonthname[\THEMONTH]-\THEYEAR}
+
+% Table packages
+\usepackage{array}
+\usepackage{hhline}
+\usepackage{multirow}
+\usepackage{xltabular}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{tablefootnote}
+
+% Text formatting
+\usepackage{soul}
+
+% Fix for xltabular/longtable table counter double-increment issue
+\usepackage{etoolbox}
+\makeatletter
+% When using \captionof{table} before xltabular, the counter is already incremented
+% We need to decrement it before xltabular increments it again
+\AtBeginEnvironment{xltabular}{\addtocounter{table}{-1}}
+% Also patch longtable's \LT@array to prevent it from incrementing when \caption is used inside
+\patchcmd{\LT@array}{\refstepcounter{table}}{}{}{}
+\makeatother
+
+% ============================================================================
+% Page Geometry (A4)
+% ============================================================================
+\usepackage{geometry}
+\geometry{
+  a4paper,
+  top=24mm,
+  bottom=24mm,
+  left=24mm,
+  right=20mm
+}
+
+% ============================================================================
+% Colors
+% ============================================================================
+\usepackage[table]{xcolor}
+\definecolor{headerGray}{gray}{0.9}
+
+% ============================================================================
+% Header and Footer Configuration
+% ============================================================================
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+% ============================================================================
+% Spacing Configuration
+% ============================================================================
+
+% Paragraph spacing
+\setlength{\parskip}{3pt plus 0.5pt}        % Space between paragraphs
+\setlength{\parindent}{0pt}                 % No paragraph indentation
+
+% Float spacing (figures, tables)
+\setlength{\textfloatsep}{10pt plus 2pt minus 2pt}  % Space around floats
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}       % Space between floats
+
+% List spacing
+\usepackage{enumitem}
+\setlist[itemize]{itemsep=2pt, parsep=0pt, topsep=4pt, partopsep=0pt}
+
+% Caption spacing
+\setlength{\abovecaptionskip}{3pt}          % Space above captions
+\setlength{\belowcaptionskip}{0pt}          % Space below captions
+
+% Longtable/xltabular spacing
+\setlength{\LTpre}{0pt}                     % Space before longtables
+\setlength{\LTpost}{0pt}                    % Space after longtables
+\setlength{\extrarowheight}{1.5pt}          % Space at start of table rows
+
+% ============================================================================
+% Section Heading Configuration
+% ============================================================================
+\usepackage{titlesec}
+
+% Format level 4 headings (paragraph) with italic text and line breaks
+\titleformat{\paragraph}[hang]{\normalfont\normalsize\bfseries\itshape}{\theparagraph}{1em}{}
+
+% Spacing for all section levels: {left}{before}{after}
+\titlespacing*{\section}{0pt}{2.25ex plus 1ex minus .2ex}{1.2ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{1.75ex plus 1ex minus .2ex}{1.0ex plus .2ex}
+\titlespacing*{\subsubsection}{0pt}{1.50ex plus 1ex minus .2ex}{0.8ex plus .2ex}
+\titlespacing*{\paragraph}{0pt}{1.25ex plus 1ex minus .2ex}{0.6ex plus .2ex}
+
+% ============================================================================
+% Table Formatting
+% ============================================================================
+
+% Grid line width
+\setlength{\arrayrulewidth}{0.5pt}
+\setlength{\doublerulesep}{0pt}
+
+% Apply small font size to all table environments
+\usepackage{etoolbox}
+\usepackage{letltxmacro}
+\LetLtxMacro{\oldxltabular}{\xltabular}
+\LetLtxMacro{\oldendxltabular}{\endxltabular}
+
+\renewenvironment{xltabular}[2]{%
+  \par\small% Force paragraph break and set font size
+  \vspace{-4pt}
+  \oldxltabular{#1}{#2}%
+}{%
+  \oldendxltabular%
+  \vspace{-16pt}
+  \par% Force paragraph break after
+}
+\AtBeginEnvironment{tabularx}{\small}
+\AtBeginEnvironment{tabular}{\small}
+
+\captionsetup[table]{font=it}
+
+% ============================================================================
+% Pandoc Compatibility Commands
+% ============================================================================
+\newcommand{\passthrough}[1]{#1}
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+% Fix for longtable caption type 'none'
+\makeatletter
+\newcounter{none}
+\makeatother
+
+% ============================================================================
+% Numbering Depth Configuration
+% ============================================================================
+
+% Section numbering depth (how deep to number sections)
+$if(secnumdepth)$
+\setcounter{secnumdepth}{$secnumdepth$}
+$else$
+\setcounter{secnumdepth}{4}
+$endif$
+
+% Table of contents depth (how deep to include in TOC)
+$if(toc-depth)$
+\setcounter{tocdepth}{$toc-depth$}
+$else$
+\setcounter{tocdepth}{4}
+$endif$
+
+% ============================================================================
+% Hyperlink Configuration
+% ============================================================================
+\hypersetup{
+  pdftitle={$if(title)$$title$$endif$},
+  pdfauthor={$if(author)$$for(author)$$author$$sep$; $endfor$$endif$},
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+% ============================================================================
+% Header and Footer Setup
+% ============================================================================
+
+% Enable fancy headers/footers
+\pagestyle{fancy}
+\fancyhf{}  % Clear all header and footer fields
+
+% Header content
+\fancyhead[L]{$doc-title$}
+\fancyhead[R]{$doc-subtitle$}
+
+% Footer content - Left: Issue date and copyright
+\fancyfoot[L]{%
+    $doc-course$ - $doc-semester$%
+}
+
+% Footer content - Center: Document number
+\fancyfoot[C]{%
+  $doc-authors$ \\%
+  \customdate\today
+}
+
+% Footer content - Right: Page number and classification
+\fancyfoot[R]{%
+    page \thepage/\pageref*{LastPage}%
+}
+
+% Header/footer rule styling
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\setlength{\headheight}{14pt}
+\setlength{\footskip}{30pt}
+
+% ============================================================================
+% Document Body
+% ============================================================================
+\begin{document}
+
+% Table of Contents (if enabled)
+$if(toc)$
+{
+\hypersetup{linkcolor=black}
+\setcounter{tocdepth}{$if(toc-depth)$$toc-depth$$else$4$endif$}
+\tableofcontents
+}
+\newpage
+$endif$
+
+% Table numbering format: Section--Number (e.g., 1--1, 1--2)
+\counterwithin{table}{section}
+\renewcommand{\thetable}{\arabic{section}--\arabic{table}}
+
+% Main document content
+$body$
+
+\end{document}
