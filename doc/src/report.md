@@ -1,4 +1,4 @@
-# Abstract
+# Abstract {-}
 
 # Introduction
 
@@ -14,12 +14,6 @@
 
 # Conclusion
 
-# Bibliography
+\newpage
 
-[bibliography]
-
----
-
-TODO:
-Add list of figures
-Add list of tables
+# References {-}

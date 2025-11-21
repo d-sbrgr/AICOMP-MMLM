@@ -2,19 +2,32 @@ from: markdown
 to: pdf
 pdf-engine: xelatex
 template: template.tex
-citeproc: true
+filters:
+  - pandoc-crossref
+  - citeproc
 bibliography: references.bib
 csl: apa.csl
 standalone: true
 output-file: report.pdf
 number-sections: true
+resource-path:
+  - src
 metadata:
   doc-title: "Comparing Machine Learning Methods for Sports"
   doc-subtitle: "A Case Study on NCAA Basketball"
   doc-semester: "HS25"
   doc-course: "AICOMP"
   doc-authors: "Luca Kyburz, David Schurtenberger"
-  bibliography: references.bib
+  figureTitle: "Figure"
+  tableTitle: "Table"
+  listingTitle: "Listing"
+  figPrefix: "Figure"
+  eqnPrefix: "Equation"
+  tblPrefix: "Table"
+  lstPrefix: "Listing"
+  secPrefix: "Section"
+  loft: true
+  toc: true
 variables:
   fontsize: 11pt
   tables: true

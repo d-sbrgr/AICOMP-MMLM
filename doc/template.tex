@@ -23,6 +23,13 @@ $endif$
 \usepackage{calc}
 \usepackage{datetime}
 \usepackage{makecell}
+\usepackage{float}
+\usepackage{amsmath}
+
+% Configure default figure placement
+\makeatletter
+\def\fps@figure{htbp}  % Default placement: here, top, bottom, page
+\makeatother
 
 % Define custom date format
 \newdateformat{customdate}{\THEDAY-\shortmonthname[\THEMONTH]-\THEYEAR}
@@ -98,6 +105,13 @@ $endif$
 \setlength{\LTpost}{0pt}                    % Space after longtables
 \setlength{\extrarowheight}{1.5pt}          % Space at start of table rows
 
+% TOC spacing
+\usepackage{tocloft}
+\setlength{\cftbeforesecskip}{2pt}        % Space before section entries
+\setlength{\cftbeforesubsecskip}{1pt}     % Space before subsection entries
+\setlength{\cftbeforesubsubsecskip}{1pt}  % Space before subsubsection entries
+\setlength{\cftbeforeparaskip}{1pt}       % Space before paragraph entries
+
 % ============================================================================
 % Section Heading Configuration
 % ============================================================================
@@ -151,6 +165,30 @@ $endif$
 \makeatletter
 \newcounter{none}
 \makeatother
+
+% CSLReferences environment for bibliography
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-ident, #2 entry spacing
+ {% don't indent paragraphs
+  \setlength{\parindent}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+    \let\oldpar\par
+    \def\par{\hangindent=\cslhangindent\oldpar}
+  \fi
+  % set entry spacing
+  \setlength{\parskip}{#2\baselineskip}
+  % Redefine \bibitem to work without list environment
+  \renewcommand{\bibitem}[2][]{\par}
+ }%
+ {}
+\newcommand{\CSLBlock}[1]{#1\hfill\break}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
 
 % ============================================================================
 % Numbering Depth Configuration
@@ -235,7 +273,24 @@ $endif$
 \counterwithin{table}{section}
 \renewcommand{\thetable}{\arabic{section}--\arabic{table}}
 
+% Figure numbering format: Section--Number (e.g., 1--1, 1--2)
+\counterwithin{figure}{section}
+\renewcommand{\thefigure}{\arabic{section}--\arabic{figure}}
+
 % Main document content
 $body$
+
+% List of Figures (if enabled)
+$if(loft)$
+\newpage
+{
+\hypersetup{linkcolor=black}
+\listoffigures
+\addcontentsline{toc}{section}{List of Figures}
+\hypersetup{linkcolor=black}
+\listoftables
+\addcontentsline{toc}{section}{List of Tables}
+}
+$endif$
 
 \end{document}
