@@ -5,7 +5,7 @@ RUN apk add --no-cache \
     fontconfig
 
 RUN tlmgr install datetime fmtcount xkeyval makecell xltabular ltablex tablefootnote xifthen lastpage \
-    enumitem titlesec lm lm-math
+    enumitem titlesec lm lm-math tocloft
 
 RUN fc-cache -fv
 
