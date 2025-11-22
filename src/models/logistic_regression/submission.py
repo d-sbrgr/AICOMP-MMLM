@@ -1,0 +1,58 @@
+import wandb
+
+from ...dataloaders import get_data_loader
+from ...experiments import DefaultTracker
+from ...experiments.config import RunConfig
+from ...submissions.submission import create_submission as create_submission_base
+from .config import LogisticRegressionHyperparamConfig
+from .model import EnsembleLogisticRegressorModel, LogisticRegressionModel
+
+
+def create_submission(
+    season: int,
+    run_id: str,
+    submission_affix: str = "",
+    entity: str = "aicomp-mmlm",
+    project: str = "logistic-regression",
+):
+    """
+    Create a submission file using a trained Logistic Regression model from a W&B run.
+
+    Args:
+        season: Season for which to create the submission (e.g., 2025)
+        run_id: W&B run ID (e.g., "j7xmtprd")
+        submission_affix: Optional suffix for the submission filename
+        entity: W&B entity name
+        project: W&B project name
+
+    Returns:
+        Path to the created submission file
+    """
+    run_path = f"{entity}/{project}/{run_id}"
+
+    run = wandb.Api().run(run_path)
+    config = run.config
+    print("Config:", config)
+
+    run_config = RunConfig(**config.get("run_config", {}))
+    print("Run Config:", run_config)
+
+    hyperparameters = LogisticRegressionHyperparamConfig(**config.get("logistic_regression_config", {}))
+    print("Hyperparameters:", hyperparameters)
+
+    dataloader = get_data_loader(run_config)
+
+    # Use ensemble model if ensemble dataloader is specified
+    is_ensemble = run_config.data_loader == "season_average_ensemble"
+    model_cls = EnsembleLogisticRegressorModel if is_ensemble else LogisticRegressionModel
+    model = model_cls(dataloader, hyperparameters, None, DefaultTracker({}))
+
+    model.fit(run_config.valid_season, run_config.start_season)
+    submission_path = create_submission_base(
+        season=season,
+        model=model,
+        filename=f"submission_logistic_regression{'_' + submission_affix if submission_affix else ''}_{season}.csv",
+        fit=True,
+    )
+    print(f"Created submission at: {submission_path}")
+    return submission_path
