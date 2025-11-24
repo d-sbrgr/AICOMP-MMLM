@@ -10,7 +10,7 @@ from ..model import Model
 class WinRatioModel(Model):
     """Predicts the outcome of a matchup based on the overall win rates of the two teams."""
 
-    def __init__(self, alpha: float = 10.0, prior: float = 0.5):
+    def __init__(self, alpha: float = 5.0, prior: float = 2.0):
         super().__init__()
         self.alpha = alpha
         self.prior = prior
@@ -64,8 +64,8 @@ class WinRatioModel(Model):
         tourney_stats[self.GAMES] = tourney_stats[self.WINS] + tourney_stats[self.LOSSES]
 
         # Win rate with bayesian smoothing
-        tourney_stats[self.WIN_RATE] = (tourney_stats[self.WINS] + self.alpha * self.prior) / (
-            tourney_stats[self.GAMES] + self.alpha
+        tourney_stats[self.WIN_RATE] = (tourney_stats[self.WINS] + self.alpha) / (
+            tourney_stats[self.GAMES] + self.alpha * self.prior
         )
 
         return tourney_stats

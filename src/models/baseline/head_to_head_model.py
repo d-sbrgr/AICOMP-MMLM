@@ -28,7 +28,7 @@ class HeadToHeadModel(WinRatioModel):
     If not enough head-to-head data is available, it falls back to using overall win rates.
     """
 
-    def __init__(self, alpha: float = 10.0, prior: float = 0.5, min_head_to_head_games: int = 3):
+    def __init__(self, alpha: float = 5.0, prior: float = 2.0, min_head_to_head_games: int = 3):
         super().__init__(alpha=alpha, prior=prior)
         self.min_head_to_head_games = min_head_to_head_games
 
@@ -107,8 +107,8 @@ class HeadToHeadModel(WinRatioModel):
         ).drop(columns=[f"{Columns.TEAM_ID}_Opponent"])
 
         # Direct head to head win rate with bayesian smoothing
-        head_to_head_games[H2H_WIN_RATE] = (head_to_head_games[self.WINS] + self.alpha * self.prior) / (
-            head_to_head_games[self.WINS] + head_to_head_games[self.LOSSES] + self.alpha
+        head_to_head_games[H2H_WIN_RATE] = (head_to_head_games[self.WINS] + self.alpha) / (
+            head_to_head_games[self.WINS] + head_to_head_games[self.LOSSES] + self.alpha * self.prior
         )
 
         # Win rate ratio
