@@ -2,19 +2,43 @@
 
 # Introduction
 
-# Data
+# Data {#sec:data}
 
 ## Exploratory Analysis
 
 ## Feature Engineering
 Before training the machine learning models, several features were engineered from the raw game data. The aim of these features was to capture the performance of a team, both in their athletic abilities as well as their mental strength.
 
-### ELO Rating
+### ELO Rating {#sec:elo-rating}
 [@Elo1978]
+@TODO: @Dave - needs checking and amending. Plus reference at the right spot
+
+The ELO rating system is a method for calculating the relative skill levels of players or teams in competitive games. In the context of NCAA basketball, each team is assigned an ELO rating that is updated after each game based on the outcome and the expected probability of winning. The win probability for a matchup between team $A$ and team $B$ is calculated using the logistic function:
+
+$$
+P(A \text{ beats } B) = \frac{1}{1 + 10^{(R_B - R_A)/400}}
+$$
+
+where $R_A$ and $R_B$ are the ELO ratings of teams $A$ and $B$ respectively. After each game, the ELO ratings are updated according to:
+
+$$
+R_A^{new} = R_A^{old} + K \cdot (S_A - P(A \text{ beats } B))
+$$
+
+where $K$ is a constant that determines how much ratings change after each game (typically set between 16 and 32), and $S_A$ is the actual outcome (1 for a win, 0 for a loss). The same update is applied symmetrically to team $B$.
 
 ### Quality
 
 ### ELO Delta Sliding Window
+The ELO Delta Sliding Window feature captures the change in a team's ELO rating over a specified window of games. The idea behind the it was to capture the mentality of a team, as a team's confidence, and with that their performance, might increase or decrease with the change in ELO. The ELO delta is calculated as such: $\Delta \text{R}_w = \text{R}_{\text{current}} - \text{R}_{w}$, where $\text{R}_{\text{current}}$ is the team's ELO rating at the current game and $\text{R}_{w}$ is their ELO rating $w$ games prior.
+
+Different window sizes $w$ were considered and ultimately chosen with a grid search that tries to maximize the improvement of the brier score of the raw ELO predictions in @sec:elo-rating. The following formula was used to calculate the predictions:
+
+$$
+P(A \text{ beats } B) = \frac{1}{1 + 10^{(R_B + \omega \cdot \Delta R_{B,w} - R_A + \omega \cdot \Delta R_{A,w})/400}}
+$$
+
+Where $\omega$ is a weight for the delta adjustment. Given this formula the difference of the brier score between the adjusted ELO predictions and the raw ELO predictions was calculated for different window sizes $w$ and weights $\omega$. The pair that maximizes $\text{Brier}_{\text{raw}} - \text{Brier}_{\text{adjusted}}$ was then chosen to use for the final feature; window size $w = 3$ with a weight of $\omega = 0.1$.
 
 ### Win Streaks
 
@@ -32,7 +56,7 @@ Before training the machine learning models, several features were engineered fr
 This section describes the various approaches used during the project, starting with statistical approaches to several machine learning methods.
 
 ## Statistical Approaches
-To establish a baseline for our machine learning approaches, we implemented several statistical approaches.All of these models were based on the entire compact regular or tourney season results described in [data](#data).
+To establish a baseline for our machine learning approaches, we implemented several statistical approaches.All of these models were based on the entire compact regular or tourney season results described in @sec:data.
 
 ### Random
 In the context of this project the random baseline considered was a prediction of a 50% win probability for each team of every matchup in the 2025 tournament. This does not take into account any data at all, and serves as the baseline of our statistical approaches.
@@ -45,24 +69,24 @@ $$
 
 Where $\mu$ is the mean seed of the respective team, and $\mu = 32$ if the team has not participated in any tournaments.
 
-### Win Ratio
+### Win Ratio {#sec:win-ratio}
 The win ratio approach is similar to the seed ratio approach, but instead of using the mean seed of a team, the win ratio over all past regular and tournament games is used. The win rate $wr$ is calculated as follows:
 $$
 wr = \frac{w + \alpha }{w+l + \alpha \cdot d}
 $$
 
-Where $w$ is the number of wins and $l$ is the number of losses of a team over all games in the [data](#data). To account for small sample sizes, we applied Laplace smoothing [@Laplace1814] with $\alpha = 5$ and $d = 2$. This would result in a $wr = 0.5$ for a team without any games played. The win probability for a matchup between team $A$ and $B$ is then calculated as follows:
+Where $w$ is the number of wins and $l$ is the number of losses of a team over all games in the @sec:data. To account for small sample sizes, we applied Laplace smoothing [@Laplace1814] with $\alpha = 5$ and $d = 2$. This would result in a $wr = 0.5$ for a team without any games played. The win probability for a matchup between team $A$ and $B$ is then calculated as follows:
 $$
 P(A \text{ beats } B) = \frac{wr_A}{wr_A + wr_B}
 $$
 
 ### Head-to-Head Ratio
-The head-to-head ratio approach is an extension of the win ratio approach, but instead of using the overall win ratio of a team, the head-to-head win ratio between two teams is used if they have played against each other a minimum number of games. The head-to-head win rate $hwr$ for teams $A$ and $B$ is calculated analogous to the [win rate](#win-ratio):
+The head-to-head ratio approach is an extension of the win ratio approach, but instead of using the overall win ratio of a team, the head-to-head win ratio between two teams is used if they have played against each other a minimum number of games. The head-to-head win rate $hwr$ for teams $A$ and $B$ is calculated analogous to @sec:win-ratio:
 $$
 hwr_{A,B} = \frac{w_{A,B} + \alpha }{w_{A,B}+l_{A,B} + \alpha \cdot d}
 $$
 
-Where $w_{A,B}$ is the number of wins of team $A$ against team $B$ and $l_{A,B}$ is the number of losses of team $A$ against team $B$. The same Laplace smoothing [@Laplace1814] with $\alpha = 5$ and $d = 2$ is applied. If teams $A$ and $B$ have played less games against each other than a given threshold, the overall win ratio as described in [win ratio](#win-ratio) is used instead. The win probability for a matchup between team $A$ and $B$ is then calculated as follows:
+Where $w_{A,B}$ is the number of wins of team $A$ against team $B$ and $l_{A,B}$ is the number of losses of team $A$ against team $B$. The same Laplace smoothing [@Laplace1814] with $\alpha = 5$ and $d = 2$ is applied. If teams $A$ and $B$ have played less games against each other than a given threshold, the overall win ratio as described in @sec:win-ratio is used instead. The win probability for a matchup between team $A$ and $B$ is then calculated as follows:
 $$
 P(A \text{ beats } B) = 
 \begin{cases}
@@ -120,6 +144,7 @@ Next to the two standard loss functions, mean squared error and binary cross-ent
 The idea was to use BCE with a penalty term, that increases the loss for predictions that far from the target. A fitting penalty term seemed to be the entropy [@shannon1948a; @shannon1948b], which represents the uncertainty of a random variable, in this case the prediction of the win probability.
 
 ![Comparison of BCE, entropy and a combination](./images/bce-entropy-combination.png){#fig:bce-entropy-combination width=50%}
+
 @fig:bce-entropy-combination shows the curve of the BCE loss, the entropy and an addition of the two given the predictions for a true label of $1$. As can be seen by the combination of the BCE and the entropy, the loss is increased considerably for uncertain predictions (near $0.5$), while confident predictions (near $0$ or $1$) are only slightly affected. Based on this, the following loss funtion was defined:
 
 $$
@@ -127,6 +152,7 @@ L = \text{BCE}(y_{pred}, y_{true}) + \lambda H(y_{pred})
 $$
 
 where $H(y_{pred}) = -y_{pred} \log(y_{pred}) - (1-y_{pred}) \log(1-y_{pred})$ is the entropy of the prediction, and $\lambda$ is a configurable weight. To find a $\gamma$ for which the loss of confident predictions is the most distinct, while maintaining a monotonically decreasing loss towards the true label, a binary search was conducted, which lead to $\gamma \approx 3.592$, which we reduced to $\gamma = 3.5$ for simplicity. The graph of the final loss function can be seen in @fig:bce-with-entropy-penalty. 
+
 ![BCE with entropy penalty loss function](./images/bce-with-entropy-penalty-loss-function.png){#fig:bce-with-entropy-penalty width=50%}
 
 ### Training Configuration
