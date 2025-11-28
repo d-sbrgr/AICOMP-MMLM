@@ -43,13 +43,13 @@ Where $\omega$ is a weight for the delta adjustment. Given this formula the diff
 ### Win Streaks
 
 
-## Dataset Preparation
+## Dataset Preparation {#sec:dataset-preparation}
 
-### Season Averages
+### Season Averages {#sec:season-averages}
 
-### Weighted Season Averages
+### Weighted Season Averages {#sec:weighted-season-averages}
 
-### Sliding Window Averages
+### Sliding Window Averages {#sec:sliding-window-averages}
 
 
 # Methods
