@@ -1,0 +1,55 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0" version="28.2.8">
+  <diagram name="Page-1" id="ptrKziitxdzVowo7qFzq">
+    <mxGraphModel dx="577" dy="448" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-6" value="" style="rounded=0;whiteSpace=wrap;html=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="10" y="60" width="160" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="ag1mrN10wfnkD7-jsBWR-1" target="ag1mrN10wfnkD7-jsBWR-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-1" value="Linear" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="35" y="80" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="ag1mrN10wfnkD7-jsBWR-2" target="ag1mrN10wfnkD7-jsBWR-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-2" value="Batch Norm" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="35" y="130" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="ag1mrN10wfnkD7-jsBWR-4" target="ag1mrN10wfnkD7-jsBWR-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-4" value="Activation" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="35" y="180" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ag1mrN10wfnkD7-jsBWR-7" target="ag1mrN10wfnkD7-jsBWR-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-7" value="&lt;div&gt;Input&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="35" y="10" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-8" value="Sigmoid" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="35" y="350" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="ag1mrN10wfnkD7-jsBWR-11" target="ag1mrN10wfnkD7-jsBWR-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-11" value="Linear" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="35" y="300" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ag1mrN10wfnkD7-jsBWR-12" target="ag1mrN10wfnkD7-jsBWR-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-12" value="Dropout" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="35" y="230" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ag1mrN10wfnkD7-jsBWR-21" value="Nx" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=17;" vertex="1" parent="1">
+          <mxGeometry x="170" y="155" width="55" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
