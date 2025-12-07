@@ -335,11 +335,12 @@ $$
 P(A \text{ beats } B) = \frac{ds_A}{ds_A + ds_B}
 $$
 
-## Classical Machine Learning Models
+## Classical Machine Learning Models {#sec:classical-machine-learning-models}
 To improve upon the statistical baselines, several classical machine learning models were experimented with.
 
 ### Models
 Machine learning models of the following types were trained during the course of this project:
+
 - Logistic Regression [@Cox1958]
 - Support Vector Machine (SVM) [@Cortes1995]
 - Random Forest [@Breiman2001]
@@ -354,23 +355,23 @@ For these classical machine learning models, an ensemble training approach was i
 @TODO: @Dave - you'll no better how to elaborate on this
 
 ## Neural Networks
-As a final modelling approach, deep learning techniques were explored.
-@TODO: @Luca - might be good to mention the reasoning for this choice and what we hoped to achieve (NN as feature extractors, capture more complex patterns, etc.)
+As a final modelling approach, deep learning techniques were explored. The main idea was that a deep enough neural network could extract more features from the already existing ones and thus make better predictions than the classical machine learning models (@sec:classical-machine-learning-models), especially on the larger datasets (@sec:dataset-preparation).
 
 To experiment with deep learning approaches, a flexible neural network architecture was implemented using PyTorch Lightning [@Falcon2019]. The neural network framework supports various architectural configurations and training strategies to predict win probabilities.
 
-### Architecture
-@TODO: @Luca - add a nice graphic of the architecture here
-The neural network architecture is fully configurable through hyperparameters:
+### Architecture {#sec:neural-network-architecture}
+The architecture used is a deep neural network with theoretically any amount of fully connected layers. To experiment with different variations of that architecture, the depth of the network and the width and activation of each layer were made configurable as hyperparameters.
 
-@TODO: @Luca - add more details here about the architecture, number of layers, activations, etc.
+![Neural network architecture](./images/neural-network/architecture_light.png){#fig:neural-network-architecture width=20%}
 
-### Loss Functions
-Next to the two standard loss functions, mean squared error and binary cross-entropy (BCE), a custom loss function with the goal to force the model to make over confident predictions. Inspiration for this were the winning solutions of the Kaggle competition, which manually push confident predictions to be even more confident. @TODO: @Luca - add references
+@fig:neural-network-architecture shows a schematic of the neural network architecture used. The input can be any of the features described in @sec:dataset-preparation, which are then passed through multiple blocks of linear layers, ending in a sigmoid activation, which then represents the win probability prediction.
 
-The idea was to use BCE with a penalty term, that increases the loss for predictions that far from the target. A fitting penalty term seemed to be the entropy [@shannon1948a; @shannon1948b], which represents the uncertainty of a random variable, in this case the prediction of the win probability.
+### Loss Functions {#sec:loss-functions}
+Next to the two standard loss functions, mean squared error (MSE) and binary cross-entropy (BCE), a custom loss function with the goal to force the model to make over confident predictions. Inspiration for this were the winning solutions of the Kaggle competition, which manually push confident predictions to be even more confident. One of these examples is the 1st place solution by @odeh2025marchMLMania.
 
-![Comparison of BCE, entropy and a combination](./images/bce-entropy-combination.png){#fig:bce-entropy-combination width=50%}
+The idea was to use BCE with a penalty term, that increases the loss for predictions that far from the target. A fitting penalty term seemed to be the entropy [@shannon1948a; @shannon1948b], which represents the uncertainty of a random variable, in this case the win probability.
+
+![Comparison of BCE, entropy and a combination](./images/neural-network/bce-entropy-combination.png){#fig:bce-entropy-combination width=50%}
 
 @fig:bce-entropy-combination shows the curve of the BCE loss, the entropy and an addition of the two given the predictions for a true label of $1$. As can be seen by the combination of the BCE and the entropy, the loss is increased considerably for uncertain predictions (near $0.5$), while confident predictions (near $0$ or $1$) are only slightly affected. Based on this, the following loss funtion was defined:
 
@@ -380,12 +381,25 @@ $$
 
 where $H(y_{pred}) = -y_{pred} \log(y_{pred}) - (1-y_{pred}) \log(1-y_{pred})$ is the entropy of the prediction, and $\lambda$ is a configurable weight. To find a $\gamma$ for which the loss of confident predictions is the most distinct, while maintaining a monotonically decreasing loss towards the true label, a binary search was conducted, which lead to $\gamma \approx 3.592$, which we reduced to $\gamma = 3.5$ for simplicity. The graph of the final loss function can be seen in @fig:bce-with-entropy-penalty. 
 
-![BCE with entropy penalty loss function](./images/bce-with-entropy-penalty-loss-function.png){#fig:bce-with-entropy-penalty width=50%}
+![BCE with entropy penalty loss function](./images/neural-network/bce-with-entropy-penalty-loss-function.png){#fig:bce-with-entropy-penalty width=50%}
 
 ### Training Configuration
-@TODO: @Luca - add more details here about training configuration, optimizers, schedulers, etc.
+With the architecture as hyperparameter approach the training could be defined by the following groups of hyperparameters.
 
-# Experiments
+| Hyperparameter | Description |
+|---------------|----------------------------------------------------|
+| Architecture | The architecture of the neural network was described in @sec:neural-network-architecture. Specified as an array of widths of linear layers, where the length of the array determines the depth of the network. |
+| Learning Rate | The learning rate together with learning rate schedulers and their specific parameters. Used schedulers include StepLR, ReduceLROnPlateau, ExponentialLR and CosineAnnealingLR. |
+| Loss Function | The objective function used to train the model. Possible values included MSE, BCE, and the BCE with entropy penalty described in @sec:loss-functions. |
+| Optimization | The framework supports various optimizers, however, the optimizer used for all experiments was AdamW. |
+| Regularization | Dropout layers and weight decay were used to counteract overfitting. |
+: Main neural network training hyperparameters {#tbl:neural-network-hyperparameters}
+
+@tbl:neural-network-hyperparameters summarizes the main hyperparameters used to configure the training, it is not an exhaustive list of all possible hyperparameters. The implementation supported even more hyperparameters, such as different weight initialization strategies, and more values for certain hyperparameters, like the mean absolute error loss function, but for simplicity these were not considered during this project.
+
+The training procedure includes early stopping based on the validation loss, as well as model checkpointing. The progress of the training was tracked using Weights & Biases [@wandb], which ultimately served as the tool to select the best model out of multiple training runs.
+ 
+# Experiment
 
 # Results
 
@@ -407,7 +421,7 @@ Taken from Existing Research, but think rephrased would fit better here:
 
 @TODO: @LucaDave - future work/ideas
 - Additional data sources
-- CNN (Consider 1 regular season of a team 1 "image" or rather one depiction of a teams performance?)
+- CNN (Consider 1 regular season of a team 1 "image" or rather one depiction of a teams performance? Feed lags of team games as input to NN)
 - Time series aspect
 
 
