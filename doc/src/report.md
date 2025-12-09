@@ -270,19 +270,32 @@ Where $\omega$ is a weight for the delta adjustment. Given this formula the diff
 ### Win Streaks
 
 
+## Feature Importance {#sec:feature-importance}
+
+
 ## Dataset Preparation {#sec:dataset-preparation}
 
 ### Season Averages {#sec:season-averages}
+87 features (ranked)
+67 data points per gender per season
+2345 total data points (matchups)
+
 
 ### Weighted Season Averages {#sec:weighted-season-averages}
+87 features (ranked)
+405’732 total samples (matchups)
+
 
 ### Sliding Window Averages {#sec:sliding-window-averages}
+81 features (ranked)
+No seed & streak features
+395’918 total samples (matchups)
 
 
 # Methods
 This section describes the various approaches used during the project, starting with statistical approaches to several machine learning methods.
 
-## Statistical Approaches
+## Statistical Approaches {#sec:statistical-approaches}
 To establish a baseline for our machine learning approaches, we implemented several statistical approaches.All of these models were based on the entire compact regular or tourney season results described in @sec:data.
 
 ### Random
@@ -349,7 +362,7 @@ Machine learning models of the following types were trained during the course of
 
 XGBoost and CatBoost were implemented using their respective Python libraries [@xgboost-website; @catboost-website], while scikit-learn [@scikit-learn-website] was used for the other models. Each of these models has its own set of hyperparameters that were considered during their respective experiments.
 
-### Ensemble Training Strategy
+### Ensemble Training Strategy {#sec:ensemble-training-strategy}
 For these classical machine learning models, an ensemble training approach was implemented where multiple models are trained on different seasons independently, and their predictions are averaged during inference. This temporal ensemble strategy tries to counteract overfitting to a single season.
 
 @TODO: @Dave - you'll no better how to elaborate on this
@@ -399,13 +412,44 @@ With the architecture as hyperparameter approach the training could be defined b
 
 The training procedure includes early stopping based on the validation loss, as well as model checkpointing. The progress of the training was tracked using Weights & Biases [@wandb], which ultimately served as the tool to select the best model out of multiple training runs.
  
-# Experiment
+# Experiments {#sec:experiments}
+The experiments conducted can be divided into the experiments with the statistical approaches and the experiments with the machine learning approaches. The statistical approaches were run on their respective subset of data as described in @sec:statistical-approaches. For the machine learning approaches, experiments were conducted for each model type (@sec:classical-machine-learning-models, @sec:neural-network-architecture) and each dataset (@sec:dataset-preparation), with a few exceptions. Additionally, ensemble experiments were conducted for each classical model type (@sec:ensemble-training-strategy).
 
-# Results
+| Experiment Type | Models |
+|-------------------------------------|------------------------|
+| Season Averages (@sec:season-averages) | All |
+| Season Averages Ensembles (@sec:season-averages, @sec:ensemble-training-strategy) | All, except neural network |
+| Weighted Season Averages (@sec:weighted-season-averages) | All, except SVM |
+| Sliding Window Averages (@sec:sliding-window-averages) | All, except SVM |
+: Overview of the conducted experiments {#tbl:experiment-overview}
 
-# Discussion
+@tbl:experiment-overview summarizes the experiments that were conducted for each dataset and model type. The SVM model was not trained on the Weighted Season Averages and Sliding Window Averages datasets because the SVM was not able to handle the size of these datasets.
 
-# Conclusion
+All experiments were conducted using Weights & Biases [@wandb] sweeps with Bayesian optimization of the respective models hyperparameters (can be taken from the source code, @TODO: Source code reference), including dataset specific hyperparameters (see following sections). Like this an experiment for each model and experiment type as shown in @tbl:experiment-overview was run with a maximum of 100 runs. There was one exception for the latter for the neural networks, where one such experiment was run per loss function (@sec:loss-functions).
+
+At the end of each experiment, the best model according to the lowest Brier score on the validation set of the respective dataset was selected for final evaluation on the test set on Kaggle.
+
+## Dataset Hyperparameters
+The dataloader of each dataset allows to specify a number $n$ of ranked features to use during training. The top $n$ features based on the features importance (@sec:feature-importance) would then be selected for training. Additionally the experiments with the Weighted Season Averages dataset (@sec:weighted-season-averages) allowed to specify weights for regular season and tournament games, as well as a discount factor for older games. These hyperparameters were also optimized during the sweeps.
+
+# Data Split
+The split into training and validation set depends on the experiment type. @tbl:data-split-overview summarizes how the data is splits for each experiment type.
+
+| Experiment Type | Training Data | Validation Data | Description |
+|--------------------|-----------------------|-----------------|-----------------|
+| Season Averages | Seasons 2003-2023 | Season 2024 |  |
+| Season Averages Ensembles | Each season, except one, for all seasons once | Each season once | @sec:ensemble-data-split |
+| Weighted Season Averages | 75% | 25% | Sampled from entire dataset |
+| Sliding Window Averages | 75% | 25% | Sampled from entire dataset |
+: Overview of the data splits for each experiment type {#tbl:data-split-overview}
+
+## Ensemble Data Split {#sec:ensemble-data-split}
+
+# Results {#sec:results}
+
+# Discussion {#sec:discussion}
+
+# Conclusion {#sec:conclusion}
 
 Taken from Existing Research, but think rephrased would fit better here:
 
