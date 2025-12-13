@@ -590,8 +590,10 @@ CatBoost achieved the best test score of 0.1171 (rank 245) and lowest training s
 XGBoost achieved the best test score of 0.1168 (rank 238), representing the best performance across all experiments conducted. Neural Network - BCE obtained 0.1171 on test (rank 245), matching the top scores from @tbl:results-season-averages-ensembles-default-features and @tbl:results-weighted-season-averages. Random Forest showed the lowest training score of 0.1650 but achieved 0.1228 on test (rank 386). Neural Network - BCE + Entropy demonstrated the highest training and validation scores of 0.2215 and 0.2221 respectively, with a test score of 0.1230 (rank 393). All models except Neural Network - BCE + Entropy showed closely clustered validation scores between 0.1771 and 0.1785. Compared to Season Averages models in @tbl:results-season-averages, XGBoost improved from 0.1234 to 0.1168, demonstrating the value of sliding window features over season-averaged statistics. The XGBoost model's rank of 238 represents the highest achieved ranking among all experiments, beating the best models of both ensemble methods and weighted averaging strategies.
 
 # Discussion {#sec:discussion}
+@TODO
 
 # Conclusion {#sec:conclusion}
+@TODO
 
 Taken from Existing Research, but think rephrased would fit better here:
 
@@ -605,11 +607,13 @@ Taken from Existing Research, but think rephrased would fit better here:
 > men's and women's tournaments enables investigation of whether predictive patterns and optimal methodologies generalize
 > across these related but distinct competitive environments.
 
-@TODO: @LucaDave - future work/ideas
-- Additional data sources
-- CNN (Consider 1 regular season of a team 1 "image" or rather one depiction of a teams performance? Feed lags of team games as input to NN)
-- Time series aspect
+## Possible Future Work
+One potential drawback of the approaches explored in this project is how the data was prepared and fed to the models. Each approach included an aggregation of the available data, which comes with a loss of information. For future work, we propose using the data without direct aggregation, instead considering the time series aspect by predicting matchup outcomes based on $n$ or all previous matchups. One approach would be to concatenate the statistics of the past $n$ games of each team in the matchup and use this as the input vector (for example, to a deep neural network) to predict the win probability of the current game. Another approach might be to feed the entire statistics of $n$ past games from each team to a recurrent neural network as samples at separate time steps and train a classification head on the latent representation of each team's series.
 
+Another aspect that could be explored is different sources of data. One specific example would be to base predictions on the performance of individual players within each team, rather than on the team overall.
+
+## Lessons Learned
+@TODO
 
 \newpage
 
