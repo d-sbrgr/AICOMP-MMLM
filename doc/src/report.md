@@ -146,8 +146,8 @@ Comparative studies of individual algorithm performance provide context for ense
 evaluated Support Vector Machines (SVM), Random Forests (RF), and Bayesian models with probability self-consistency
 constraints on March Madness data, finding RF achieved 68.2% accuracy, SVM 66.1%, and their Bayesian approach
 approximately 50%. Similarly, @kim2023 compared five machine learning approaches on 685 tournament games,
-reporting Artificial Neural Networks achieved the highest accuracy at 67%, followed by SVM (65%), k-Nearest Neighbors (
-63%), logistic regression (63%), and Random Forests (61%). These relatively modest performance differences across
+reporting Neural Networks achieved the highest accuracy at 67%, followed by SVM (65%), k-Nearest Neighbors 
+(63%), logistic regression (63%), and Random Forests (61%). These relatively modest performance differences across
 algorithms, combined with the documented success of ensembles, suggest that model diversity and appropriate feature
 engineering may be more important than algorithm selection alone.
 
@@ -162,7 +162,7 @@ model-specific overfitting while maintaining predictive accuracy.
 
 The progression from classical machine learning to deep learning architectures reflects both methodological advancement
 and the challenge of limited training data in NCAA contexts. Classical ML comparisons consistently show competitive
-performance across algorithms when provided with well-engineered features. @kim2023 reports that Artificial
+performance across algorithms when provided with well-engineered features. @kim2023 reports that 
 Neural Networks marginally outperformed other classical algorithms (67% vs 61-65% accuracy), though all approaches
 clustered within a narrow performance range. @shen2016 similarly finds Random Forests and SVMs performing
 comparably (68% vs 66%). These modest differences suggest that for NCAA prediction, where training data is limited to
@@ -179,7 +179,7 @@ probabilistic calibration (Brier score of 0.1589). As @habib2025 discusses, the 
 discrimination versus calibration depends on the specific prediction task and evaluation criteria.
 
 @migliorati2021 examines feature selection through deep learning for NBA prediction, demonstrating that
-relatively simple neural network architectures (few layers, modest numbers of units) can achieve strong performance when
+relatively simple Neural Network architectures (few layers, modest numbers of units) can achieve strong performance when
 the input features effectively capture team strength. Their finding that single features like Elo ratings outperform
 complex box score aggregations suggests that deep learning's primary value may lie in learning optimal feature
 representations rather than necessarily requiring deep architectures. The development of home/away feature variants
@@ -272,6 +272,8 @@ Where $\omega$ is a weight for the delta adjustment. Given this formula the diff
 
 ## Feature Importance {#sec:feature-importance}
 
+### Default Features {#sec:default-features}
+
 
 ## Dataset Preparation {#sec:dataset-preparation}
 
@@ -296,7 +298,7 @@ No seed & streak features
 This section describes the various approaches used during the project, starting with statistical approaches to several machine learning methods.
 
 ## Statistical Approaches {#sec:statistical-approaches}
-To establish a baseline for our machine learning approaches, we implemented several statistical approaches.All of these models were based on the entire compact regular or tourney season results described in @sec:data.
+To establish a baseline for our machine learning approaches, we implemented several statistical approaches. All of these models were based on the entire compact regular or tourney season results described in @sec:data.
 
 ### Random
 In the context of this project the random baseline considered was a prediction of a 50% win probability for each team of every matchup in the 2025 tournament. This does not take into account any data at all, and serves as the baseline of our statistical approaches.
@@ -368,7 +370,7 @@ For these classical machine learning models, an ensemble training approach was i
 @TODO: @Dave - you'll no better how to elaborate on this
 
 ## Neural Networks
-As a final modelling approach, deep learning techniques were explored. The main idea was that a deep enough neural network could extract more features from the already existing ones and thus make better predictions than the classical machine learning models (@sec:classical-machine-learning-models), especially on the larger datasets (@sec:dataset-preparation).
+As a final modelling approach, deep learning techniques were explored. The main idea was that a deep enough neural network (NN) could extract more features from the already existing ones and thus make better predictions than the classical machine learning models (@sec:classical-machine-learning-models), especially on the larger datasets (@sec:dataset-preparation).
 
 To experiment with deep learning approaches, a flexible neural network architecture was implemented using PyTorch Lightning [@Falcon2019]. The neural network framework supports various architectural configurations and training strategies to predict win probabilities.
 
@@ -397,15 +399,28 @@ where $H(y_{pred}) = -y_{pred} \log(y_{pred}) - (1-y_{pred}) \log(1-y_{pred})$ i
 ![BCE with entropy penalty loss function](./images/neural-network/bce-with-entropy-penalty-loss-function.png){#fig:bce-with-entropy-penalty width=50%}
 
 ### Training Configuration
+
 With the architecture as hyperparameter approach the training could be defined by the following groups of hyperparameters.
 
-| Hyperparameter | Description |
-|---------------|----------------------------------------------------|
-| Architecture | The architecture of the neural network was described in @sec:neural-network-architecture. Specified as an array of widths of linear layers, where the length of the array determines the depth of the network. |
-| Learning Rate | The learning rate together with learning rate schedulers and their specific parameters. Used schedulers include StepLR, ReduceLROnPlateau, ExponentialLR and CosineAnnealingLR. |
-| Loss Function | The objective function used to train the model. Possible values included MSE, BCE, and the BCE with entropy penalty described in @sec:loss-functions. |
-| Optimization | The framework supports various optimizers, however, the optimizer used for all experiments was AdamW. |
-| Regularization | Dropout layers and weight decay were used to counteract overfitting. |
++------------------+---------------------------------------------------------------------------------------------+
+| Hyperparameter   | Description                                                                                 |
++==================+=============================================================================================+
+| Architecture     | The architecture of the neural network was described in @sec:neural-network-architecture.   |
+|                  | Specified as an array of widths of linear layers, where the length of the array determines  |
+|                  | the depth of the network.                                                                   |
++------------------+---------------------------------------------------------------------------------------------+
+| Learning Rate    | The learning rate together with learning rate schedulers and their specific parameters.     |
+|                  | Used schedulers include StepLR, ReduceLROnPlateau, ExponentialLR and CosineAnnealingLR.     |
++------------------+---------------------------------------------------------------------------------------------+
+| Loss Function    | The objective function used to train the model. Possible values included MSE, BCE, and the  |
+|                  | BCE with entropy penalty described in @sec:loss-functions.                                  |
++------------------+---------------------------------------------------------------------------------------------+
+| Optimization     | The framework supports various optimizers, however, the optimizer used for all experiments  |
+|                  | was AdamW.                                                                                  |
++------------------+---------------------------------------------------------------------------------------------+
+| Regularization   | Dropout layers and weight decay were used to counteract overfitting.                        |
++------------------+---------------------------------------------------------------------------------------------+
+
 : Main neural network training hyperparameters {#tbl:neural-network-hyperparameters}
 
 @tbl:neural-network-hyperparameters summarizes the main hyperparameters used to configure the training, it is not an exhaustive list of all possible hyperparameters. The implementation supported even more hyperparameters, such as different weight initialization strategies, and more values for certain hyperparameters, like the mean absolute error loss function, but for simplicity these were not considered during this project.
@@ -415,12 +430,22 @@ The training procedure includes early stopping based on the validation loss, as 
 # Experiments {#sec:experiments}
 The experiments conducted can be divided into the experiments with the statistical approaches and the experiments with the machine learning approaches. The statistical approaches were run on their respective subset of data as described in @sec:statistical-approaches. For the machine learning approaches, experiments were conducted for each model type (@sec:classical-machine-learning-models, @sec:neural-network-architecture) and each dataset (@sec:dataset-preparation), with a few exceptions. Additionally, ensemble experiments were conducted for each classical model type (@sec:ensemble-training-strategy).
 
-| Experiment Type | Models |
-|-------------------------------------|------------------------|
-| Season Averages (@sec:season-averages) | All |
-| Season Averages Ensembles (@sec:season-averages, @sec:ensemble-training-strategy) | All, except neural network |
-| Weighted Season Averages (@sec:weighted-season-averages) | All, except SVM |
-| Sliding Window Averages (@sec:sliding-window-averages) | All, except SVM |
++---------------------------------------------------------+----------------------+
+| Experiment Type                                         | Models               |
++=========================================================+======================+
+| Season Averages                                         | All                  |
+| (@sec:season-averages)                                  |                      |
++---------------------------------------------------------+----------------------+
+| Season Averages Ensembles                               | All, except NN & SVM |
+| (@sec:season-averages, @sec:ensemble-training-strategy) |                      |
++---------------------------------------------------------+----------------------+
+| Weighted Season Averages                                | All, except SVM      |
+| (@sec:weighted-season-averages)                         |                      |
++---------------------------------------------------------+----------------------+
+| Sliding Window Averages                                 | All, except SVM      |
+| (@sec:sliding-window-averages)                          |                      |
++---------------------------------------------------------+----------------------+
+
 : Overview of the conducted experiments {#tbl:experiment-overview}
 
 @tbl:experiment-overview summarizes the experiments that were conducted for each dataset and model type. The SVM model was not trained on the Weighted Season Averages and Sliding Window Averages datasets because the SVM was not able to handle the size of these datasets.
@@ -432,20 +457,137 @@ At the end of each experiment, the best model according to the lowest Brier scor
 ## Dataset Hyperparameters
 The dataloader of each dataset allows to specify a number $n$ of ranked features to use during training. The top $n$ features based on the features importance (@sec:feature-importance) would then be selected for training. Additionally the experiments with the Weighted Season Averages dataset (@sec:weighted-season-averages) allowed to specify weights for regular season and tournament games, as well as a discount factor for older games. These hyperparameters were also optimized during the sweeps.
 
-# Data Split
+## Data Split
 The split into training and validation set depends on the experiment type. @tbl:data-split-overview summarizes how the data is splits for each experiment type.
 
-| Experiment Type | Training Data | Validation Data | Description |
-|--------------------|-----------------------|-----------------|-----------------|
-| Season Averages | Seasons 2003-2023 | Season 2024 |  |
-| Season Averages Ensembles | Each season, except one, for all seasons once | Each season once | @sec:ensemble-data-split |
-| Weighted Season Averages | 75% | 25% | Sampled from entire dataset |
-| Sliding Window Averages | 75% | 25% | Sampled from entire dataset |
++---------------------------+--------------------------+------------------+--------------------------+
+| Experiment Type           | Training Data            | Validation Data  | Description              |
++===========================+==========================+==================+==========================+
+| Season Averages           | Seasons 2003-2023        | Season 2024      |                          |
++---------------------------+--------------------------+------------------+--------------------------+
+| Season Averages Ensembles | Each season, except one, | Each season once | @sec:ensemble-data-split |
+|                           | for all seasons once     |                  |                          |
++---------------------------+--------------------------+------------------+--------------------------+
+| Weighted Season Averages  | 75%                      | 25%              | Sampled from             |
+|                           |                          |                  | entire dataset           |
++---------------------------+--------------------------+------------------+--------------------------+
+| Sliding Window Averages   | 75%                      | 25%              | Sampled from             |
+|                           |                          |                  | entire dataset           |
++---------------------------+--------------------------+------------------+--------------------------+
+
 : Overview of the data splits for each experiment type {#tbl:data-split-overview}
 
-## Ensemble Data Split {#sec:ensemble-data-split}
+### Ensemble Data Split {#sec:ensemble-data-split}
+
+@TODO: @Dave - implement this
 
 # Results {#sec:results}
+
+All results described in this chapter follow the train/validation split described in @tbl:data-split-overview. The metric displayed 
+is the Brier score, which is the evaluation metric used on Kaggle. Lower Brier scores are better. Additionally, the rank achieved on 
+the Kaggle leaderboard for the respective test set is displayed. The Kaggle leaderboard contains a total of 1,727 submissions [@mmlm2025].
+
+## Statistical Baselines {#sec:results-statistical-baselines}
+
+| Model        | Train | Validation |    Test    |  Rank   |
+|--------------|:-----:|:----------:|:----------:|:-------:|
+| Point Ratio  |   -   |   0.2484   |   0.2548   |  1,423  |
+| Random       |   -   |   0.2500   |   0.2500   |  1,272  |
+| Head-to-Head |   -   |   0.2429   |   0.2350   |  1,210  |
+| Win Ratio    |   -   |   0.2321   |   0.2284   |  1,190  |
+| Seed Ratio   |   -   | **0.1961** | **0.1766** | **948** |
+
+: Results Baseline Models {#tbl:results-baseline-models}
+
+Among the statistical baseline models, Seed Ratio achieved the best performance with a validation Brier score of 0.1961 and test score of 0.1766, ranking 948th. The random baseline per definition has a validation and test score of 0.2500, ranking 1,272nd. Head-to-Head Ratio and Seed Ratio models performed slightly better than random with validation scores of 0.2429 and 0.2321 respectively, and test scores of 0.2350 and 0.2284, ranking 1,210th and 1,190th respectively. The Point Ratio model performed worst among all baselines with validation and test scores of 0.2484 and 0.2548 respectively, ranking 1,423rd.
+
+## Season Averages {#sec:results-season-averages}
+
+| Model                           |   Train    | Validation |    Test    |  Rank   |
+|---------------------------------|:----------:|:----------:|:----------:|:-------:|
+| Support Vector Machine          |   0.1804   |   0.1533   |   0.1369   |   768   |
+| Logistic Regression             |   0.1671   |   0.1587   |   0.1191   |   288   |
+| Random Forest                   | **0.1480** |   0.1547   | **0.1178** | **260** |
+| XGBoost                         |   0.1675   |   0.1587   |   0.1234   |   408   |
+| CatBoost                        |   0.1639   |   0.1561   |   0.1427   |   815   |
+| Neural Network                  |   0.1916   | **0.1526** |   0.1251   |   521   |
+| Neural Network - BCE            |   0.1902   |   0.1561   |   0.1189   |   283   |
+| Neural Network - BCE + Entropy  |   0.2144   |   0.1551   |   0.1221   |   361   |
+
+: Results Season Averages {#tbl:results-season-averages}
+
+Random Forest achieved the best test performance with a score of 0.1178 and rank 260, while also having the lowest training score of 0.1480. Neural Network achieved the best validation score of 0.1526 but ranked lower at 521st with a test score of 0.1251. Neural Network - BCE and Logistic Regression obtained test scores of 0.1189 (rank 283) and 0.1191 (rank 288) respectively, both closely matching Random Forest's performance. The CatBoost and SVM models showed the highest test scores of 0.1427 (rank 815) and 0.1369 (rank 768) respectively. All models achieved very similar validation scores, ranging from 0.1526 to 0.1587, but more varying test scores ranging from 0.1178 to 0.1427. Compared to the ensemble variants in @tbl:results-season-averages-ensembles, individual models showed better test scores, with Random Forest at 0.1178 outperforming the best ensemble Logistic Regression model at 0.1189. Relative to the statistical baselines in @tbl:results-baseline-models, all machine learning models substantially improved performance, with the worst ML model (CatBoost at 0.1427) still outperforming the best baseline (Seed Ratio at 0.1766) by 0.0339.
+
+| Model                  |   Train    | Validation |    Test    |  Rank   |
+|------------------------|:----------:|:----------:|:----------:|:-------:|
+| Support Vector Machine |   0.1627   |   0.1595   |   0.1242   |   453   |
+| Logistic Regression    |   0.1673   |   0.1603   |   0.1218   |   351   |
+| Random Forest          |   0.1532   |   0.1568   |   0.1184   |   270   |
+| XGBoost                | **0.1119** |   0.1557   |   0.1241   |   448   |
+| CatBoost               |   0.1588   |   0.1568   |   0.1192   |   290   |
+| Neural Network         |   0.1933   | **0.1538** | **0.1181** | **266** |
+
+: Results Season Averages - Default features {#tbl:results-season-averages-default-features}
+
+With default features, Neural Network achieved the best test score of 0.1181 (rank 266) and best validation score of 0.1538, though it showed the highest training score of 0.1933. Random Forest obtained 0.1184 on test (rank 270), slightly higher than Neural Network. CatBoost achieved 0.1192 (rank 290), significantly improving from its ranked feature variant in @tbl:results-season-averages (0.1427, rank 815). Compared to the models in @tbl:results-season-averages where ranked features were used as hyperparameters, default features generally produced similar results, however with a significantly lower spread in test scores from 0.1181 to 0.1242. While the best default feature model (Neural Network at 0.1181) marginally exceeded the best optimized model (Random Forest at 0.1178) by 0.0003, the worst default feature model (SVM at 0.1242) substantially exceeded the worst optimized model (CatBoost at 0.1427).
+
+## Season Averages Ensembles {#sec:results-season-averages-ensembles}
+
+| Model                  |   Train    | Validation |    Test    |  Rank   |
+|------------------------|:----------:|:----------:|:----------:|:-------:|
+| Logistic Regression    |   0.1668   | **0.1676** | **0.1189** | **283** |
+| Random Forest          | **0.1473** |   0.1684   |   0.1232   |   401   |
+| XGBoost                |   0.1612   |   0.1681   |   0.1213   |   335   |
+| CatBoost               |   0.1581   |   0.1682   |   0.1208   |   326   |
+
+: Results Season Averages Ensembles {#tbl:results-season-averages-ensembles}
+
+In the ensemble experiments, Logistic Regression achieved the best test score of 0.1189 (rank 283) and best validation score of 0.1676. CatBoost obtained 0.1208 on test (rank 326), followed by XGBoost at 0.1213 (rank 335). Random Forest showed the lowest training score of 0.1473 but achieved 0.1232 on test (rank 401). All ensemble models showed validation and test scores clustered between 0.1676 and 0.1684. and 0.1189 and 0.1232 respectively, therefore exhibiting less variance compared to individual models in @tbl:results-season-averages. Compared to individual models in @tbl:results-season-averages, ensemble XGBoost (0.1213) and CatBoost (0.1208) outperformed their individual counterparts (0.1234 and 0.1427 respectively), while the other models performed slightly worse.
+
+| Model                  |   Train    | Validation |    Test    |  Rank   |
+|------------------------|:----------:|:----------:|:----------:|:-------:|
+| Logistic Regression    |   0.1658   | **0.1674** |   0.1186   |   278   |
+| Random Forest          |   0.1531   |   0.1685   | **0.1171** | **245** |
+| XGBoost                |   0.1568   |   0.1678   |   0.1181   |   266   |
+| CatBoost               | **0.1405** |   0.1678   |   0.1182   |   267   |
+
+: Results Season Averages Ensembles - Default features {#tbl:results-season-averages-ensembles-default-features}
+
+With default features, Random Forest achieved the best test score of 0.1171 (rank 245), despite showing a higher validation score of 0.1685. XGBoost obtained 0.1181 on test (rank 266), followed closely by CatBoost at 0.1182 (rank 267). Logistic Regression achieved 0.1186 (rank 278) and the best validation score of 0.1674. Compared to the variants where ranked features were used as hyperparameters in @tbl:results-season-averages-ensembles, default features produced better results for every model type, with Random Forest improving from 0.1232 to 0.1171. This ensemble Random Forest (0.1171) matched the best score in @tbl:results-weighted-season-averages (CatBoost at 0.1171) and @tbl:results-sliding-window-averages (Neural Network - BCE at 0.1171), representing tied second-best performance across all approaches.
+
+## Weighted Season Averages {#sec:results-weighted-season-averages}
+
+| Model                             |   Train    | Validation |    Test    |  Rank   |
+|-----------------------------------|:----------:|:----------:|:----------:|:-------:|
+| Logistic Regression               |   0.1520   |   0.1520   |   0.1232   |   401   |
+| Random Forest                     |   0.1508   |   0.1550   |   0.1204   |   316   |
+| XGBoost                           |   0.1508   |   0.1549   |   0.1220   |   357   |
+| CatBoost                          | **0.1500** |   0.1531   | **0.1171** | **245** |
+| Neural Network                    |   0.1514   |   0.1526   |   0.1215   |   341   |
+| Neural Network - Default Features |   0.1538   |   0.1530   |   0.1231   |   397   |
+| Neural Network - BCE              |   0.1510   | **0.1513** |   0.1247   |   507   |
+| Neural Network - BCE + Entropy    |   0.1886   |   0.1855   |   0.1265   |   570   |
+
+: Results Weighted Season Averages {#tbl:results-weighted-season-averages}
+
+CatBoost achieved the best test score of 0.1171 (rank 245) and lowest training score of 0.1500. Neural Network - BCE obtained the best validation score of 0.1513 but achieved 0.1247 on test (rank 507). Neural Network - BCE + Entropy showed the highest scores with 0.1886 on training, 0.1855 on validation, and 0.1265 on test (rank 570). CatBoost's test score of 0.1171 matched the best results from @tbl:results-season-averages-ensembles-default-features (Random Forest at 0.1171) and @tbl:results-sliding-window-averages (Neural Network - BCE at 0.1171), achieving tied best performance across these approaches. This represented a substantial improvement over individual Season Averages models in @tbl:results-season-averages where CatBoost achieved 0.1427. Except for the CatBoost model, all other models showed worse test performance than at least one of their counterparts in @sec:results-season-averages and @sec:results-season-averages-ensembles.
+
+## Sliding Window Averages {#sec:results-sliding-window-averages}
+
+| Model                             |   Train    | Validation |    Test    |  Rank   |
+|-----------------------------------|:----------:|:----------:|:----------:|:-------:|
+| Logistic Regression               |   0.1763   |   0.1773   |   0.1185   |   274   |
+| Random Forest                     | **0.1650** |   0.1785   |   0.1228   |   386   |
+| XGBoost                           |   0.1773   |   0.1779   | **0.1168** | **238** |
+| CatBoost                          |   0.1655   |   0.1778   |   0.1195   |   297   | 
+| Neural Network                    |   0.1779   |   0.1772   |   0.1187   |   278   |
+| Neural Network - Default Features |   0.1781   |   0.1784   |   0.1213   |   335   |
+| Neural Network - BCE              |   0.1777   | **0.1771** |   0.1171   |   245   |
+| Neural Network - BCE + Entropy    |   0.2215   |   0.2221   |   0.1230   |   393   |
+
+: Results Sliding Window Averages {#tbl:results-sliding-window-averages}
+
+XGBoost achieved the best test score of 0.1168 (rank 238), representing the best performance across all experiments conducted. Neural Network - BCE obtained 0.1171 on test (rank 245), matching the top scores from @tbl:results-season-averages-ensembles-default-features and @tbl:results-weighted-season-averages. Random Forest showed the lowest training score of 0.1650 but achieved 0.1228 on test (rank 386). Neural Network - BCE + Entropy demonstrated the highest training and validation scores of 0.2215 and 0.2221 respectively, with a test score of 0.1230 (rank 393). All models except Neural Network - BCE + Entropy showed closely clustered validation scores between 0.1771 and 0.1785. Compared to Season Averages models in @tbl:results-season-averages, XGBoost improved from 0.1234 to 0.1168, demonstrating the value of sliding window features over season-averaged statistics. The XGBoost model's rank of 238 represents the highest achieved ranking among all experiments, beating the best models of both ensemble methods and weighted averaging strategies.
 
 # Discussion {#sec:discussion}
 
