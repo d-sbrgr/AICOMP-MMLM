@@ -101,8 +101,8 @@ $endif$
 \setlength{\belowcaptionskip}{0pt}          % Space below captions
 
 % Longtable/xltabular spacing
-\setlength{\LTpre}{0pt}                     % Space before longtables
-\setlength{\LTpost}{0pt}                    % Space after longtables
+\setlength{\LTpre}{6pt}                     % Space before longtables
+\setlength{\LTpost}{2pt}                    % Space after longtables
 \setlength{\extrarowheight}{1.5pt}          % Space at start of table rows
 
 % TOC spacing
@@ -134,6 +134,9 @@ $endif$
 \setlength{\arrayrulewidth}{0.5pt}
 \setlength{\doublerulesep}{0pt}
 
+% Define colors for table rows
+\definecolor{tableRowGray}{gray}{0.95}
+
 % Apply small font size to all table environments
 \usepackage{etoolbox}
 \usepackage{letltxmacro}
@@ -152,7 +155,18 @@ $endif$
 \AtBeginEnvironment{tabularx}{\small}
 \AtBeginEnvironment{tabular}{\small}
 
-\captionsetup[table]{font=it}
+% Improve longtable with alternating row colors and better spacing
+\let\oldlongtable\longtable
+\let\oldendlongtable\endlongtable
+\renewenvironment{longtable}{%
+  \rowcolors{2}{white}{tableRowGray}%  % Alternating row colors starting from row 2
+  \oldlongtable
+}{%
+  \oldendlongtable
+  \rowcolors{1}{white}{white}%  % Reset row colors after table
+}
+
+\captionsetup[table]{font=it, skip=-10pt}  % Increased from -10pt for better caption spacing
 
 % ============================================================================
 % Pandoc Compatibility Commands
