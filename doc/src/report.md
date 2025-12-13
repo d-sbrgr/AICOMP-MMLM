@@ -230,7 +230,90 @@ defeat favorites, indicates that current approaches may not fully capture the fa
 
 # Data {#sec:data}
 
+The dataset used for this project was obtained from the Kaggle competition "March Machine Learning Mania 2025" [@mmlm2025]. 
+It consists of a total of 36 CSV files containing various information about NCAA Division I basketball games, teams, venues, coaches and tournaments.
+
+## Data Description
+
+For this project, only a subset of the data available was used. All data used contains historical information up to and including the 2025 regular season. These are described in the following sections.
+
+### Regular Season Detailed Results {#sec:regular-season-detailed-results}
+
+The regular season detailed results contain basic game information as well as box-score statistics for every NCAA Division I basketball game played in the regular season. For men's basketball the available data start at the 2003 season and for women's basketball at the 2010. @tbl:regular-season-detailed-results describes the features available in this dataset. Features containing \[WL\] in their name are available for both the winning and losing team of a game, e.g. "WTeamID" and "LTeamID" for the winning and losing team IDs respectively.
+
+| Feature      | Description                              |
+|--------------|------------------------------------------|
+| Season       | The season in which the game was played  |
+| DayNum       | The day number within the season (1-133) |
+| \[WL\]TeamID | The ID of the team                       |
+| \[WL\]Score  | The score of the team                    |
+| WLoc         | The location of the winning team (H/A/N) |
+| NumOT        | Number of overtime periods played        |
+| \[WL\]FGM    | Field Goals Made                         |
+| \[WL\]FGA    | Field Goals Attempted                    |
+| \[WL\]FGM3   | 3-Point Field Goals Made                 |
+| \[WL\]FGA3   | 3-Point Field Goals Attempted            |
+| \[WL\]FTM    | Free Throws Made                         |
+| \[WL\]FTA    | Free Throws Attempted                    |
+| \[WL\]OR     | Offensive Rebounds                       |
+| \[WL\]DR     | Defensive Rebounds                       | 
+| \[WL\]Ast    | Assists                                  |
+| \[WL\]TO     | Turnovers                                |
+| \[WL\]Stl    | Steals                                   |
+| \[WL\]Blk    | Blocks                                   |
+| \[WL\]PF     | Personal Fouls                           |
+
+: Features of the Regular Season Detailed Results {#tbl:regular-season-detailed-results}
+
+The men's dataset contains a total of 118,882 unique games and the women's dataset 81,708 respectively.
+
+### Tournament Detailed Results {#sec:tournament-detailed-results}
+
+The tournament detailed results contains the same features as described in @sec:regular-season-detailed-results, however for games played in the NCAA Division I basketball tournaments. For men's basketball the available data starts at the 2003 season and for women's basketball at the 2010 respectively. The features are identical to those described in @tbl:regular-season-detailed-results except for `DayNum` which ranges from 134 to 154, representing the tournament game days.
+
+The men's dataset contains a total of 1,382 unique games and the women's dataset 894 respectively.
+
+### Tournament Seeds
+
+The tournament seeds dataset contains the seed information for every team that participated in the NCAA Division I basketball tournaments. As can be seen in @tbl:tournament-seeds, the dataset contains the season, seed and team ID for every team that participated in the tournament for that season. For the men the available data starts at the 1985 season and for the women at the 1998 season respectively, however only data overlapping the range of the detailed results in @sec:regular-season-detailed-results and @sec:tournament-detailed-results was used.
+
+| Feature     | Description                              |
+|-------------|------------------------------------------|
+| Season      | The season in which the game was played  |
+| Seed        | The seed of the team in the tournament   |
+| TeamID      | The ID of the team                       |
+
+: Features of the Tournament Seeds {#tbl:tournament-seeds}
+
+The seed feature additionally contains the conference region of the team as a prefix (e.g. `W01` for West region, seed 1). This was stripped and only the numerical seed value was used for this project.
+
 ## Exploratory Analysis
+
+![Regular Season Games Overview](./images/pda/MWGamesOverview.png){#fig:regular-season-games-overview width=80%}
+
+::: {#fig:score-analysis}
+![Men](./images/pda/MScoreAnalysis.png){width=45%}
+![Women](./images/pda/WScoreAnalysis.png){width=45%}
+
+Score Analysis for both (a) men and (b) women.
+:::
+
+![Game Location Analysis](./images/pda/MWLocationAnalysis.png){#fig:location-analyis width=80%}
+
+::: {#fig:seed-upsets}
+![Men](./images/pda/MSeedUpsets.png){width=45%}
+![Women](./images/pda/WSeedUpsets.png){width=45%}
+
+Upset rate by seed for both (a) men and (b) women.
+:::
+
+::: {#fig:win-margin-correlation}
+![Men](./images/pda/MCorrWinMarg.png){width=45%}
+![Women](./images/pda/MCorrWinMarg.png){width=45%}
+
+Pearson correlation of features and win margin for both (a) men and (b) women.
+:::
+
 
 ## Feature Engineering
 Before training the machine learning models, several features were engineered from the raw game data. The aim of these features was to capture the 
@@ -257,7 +340,7 @@ where $K$ is a constant that determines how much ratings change after each game 
 ### Team Quality
 
 ### ELO Delta Sliding Window
-The ELO Delta Sliding Window feature captures the change in a team's ELO rating over a specified window of games. The idea behind the it was to capture the mentality of a team, as a team's confidence, and with that their performance, might increase or decrease with the change in ELO. The ELO delta is calculated as such: $\Delta \text{R}_w = \text{R}_{\text{current}} - \text{R}_{w}$, where $\text{R}_{\text{current}}$ is the team's ELO rating at the current game and $\text{R}_{w}$ is their ELO rating $w$ games prior.
+The ELO Delta Sliding Window feature captures the change in a team's ELO rating over a specified window of games. The idea behind it was to capture the mentality of a team, as a team's confidence, and with that their performance, might increase or decrease with the change in ELO. The ELO delta is calculated as such: $\Delta \text{R}_w = \text{R}_{\text{current}} - \text{R}_{w}$, where $\text{R}_{\text{current}}$ is the team's ELO rating at the current game and $\text{R}_{w}$ is their ELO rating $w$ games prior.
 
 Different window sizes $w$ were considered and ultimately chosen with a grid search that tries to maximize the improvement of the brier score of the raw ELO predictions in @sec:elo-rating. The following formula was used to calculate the predictions:
 
@@ -268,7 +351,6 @@ $$
 Where $\omega$ is a weight for the delta adjustment. Given this formula the difference of the brier score between the adjusted ELO predictions and the raw ELO predictions was calculated for different window sizes $w$ and weights $\omega$. The pair that maximizes $\text{Brier}_{\text{raw}} - \text{Brier}_{\text{adjusted}}$ was then chosen to use for the final feature; window size $w = 3$ with a weight of $\omega = 0.1$.
 
 ### Win Streaks
-
 
 ## Feature Importance {#sec:feature-importance}
 
@@ -282,11 +364,9 @@ Where $\omega$ is a weight for the delta adjustment. Given this formula the diff
 67 data points per gender per season
 2345 total data points (matchups)
 
-
 ### Weighted Season Averages {#sec:weighted-season-averages}
 87 features (ranked)
 405’732 total samples (matchups)
-
 
 ### Sliding Window Averages {#sec:sliding-window-averages}
 81 features (ranked)

@@ -113,6 +113,33 @@ $endif$
 \setlength{\cftbeforeparaskip}{1pt}       % Space before paragraph entries
 
 % ============================================================================
+% Figure Configuration
+% ============================================================================
+\usepackage{subcaption}
+
+% Define pandoccrossrefsubfigures environment for side-by-side figures
+% This wraps multiple subfigures into a single figure environment with centering
+\newenvironment{pandoccrossrefsubfigures}{%
+  \begin{figure}[htbp]%
+  \centering%
+}{%
+  \end{figure}%
+}
+
+% Redefine subfigure to work with pandoc-crossref syntax and add spacing
+% pandoc-crossref uses: \begin{subfigure}{width}
+% but subcaption expects: \begin{subfigure}[pos]{width}
+\let\origsubfigure\subfigure
+\let\endorigsubfigure\endsubfigure
+\renewenvironment{subfigure}[1]{%
+  \origsubfigure[t]{#1}%
+  \centering%
+}{%
+  \endorigsubfigure%
+  \hspace{1em}% Add fixed 1em space after each subfigure
+}
+
+% ============================================================================
 % Section Heading Configuration
 % ============================================================================
 \usepackage{titlesec}
@@ -174,6 +201,22 @@ $endif$
 \newcommand{\passthrough}[1]{#1}
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+% Command for bounded images (ensures images fit within boundaries)
+% Constrains to both linewidth and max height, maintaining aspect ratio
+\usepackage{letltxmacro}
+\LetLtxMacro{\origincludegraphics}{\includegraphics}
+\makeatletter
+\newcommand{\pandocbounded}[1]{%
+  % Temporarily redefine includegraphics to add width/height constraints
+  \renewcommand{\includegraphics}[2][]{%
+    \origincludegraphics[##1,width=\linewidth,height=0.35\textheight,keepaspectratio]{##2}%
+  }%
+  #1%
+  % Restore original includegraphics
+  \LetLtxMacro{\includegraphics}{\origincludegraphics}%
+}
+\makeatother
 
 % Fix for longtable caption type 'none'
 \makeatletter
