@@ -504,7 +504,7 @@ The window size variable depending on the "DayNum" serving as predictor for the 
 The calculation of the discount factor of a given game is also adapted to the approach in @sec:weighted-season-averages to account for the sliding window and is calculated as follows:
 
 $$
-\text{F}_{weight} = \gamma^{(\text{DayNum}_{game} + \text{Carry} if \text{is\_previous\_season} else 0) - \text{DayNum}_{max}}
+\text{F}_{weight} = \gamma^{(\text{DayNum}_{game} + \text{Carry if is\_previous\_season else} 0) - \text{DayNum}_{max}}
 $$
 
 where $\gamma$ is the base discount factor (default = 0.98), $\text{DayNum}_{max}$ the maximum day number in the current window, $\text{DayNum}_{game}$ the day number of the game to be weighted, and $\text{Carry} = 40 + 154 = 194$ is a constant composed of the maximum day number of a season (154) plus a buffer (40) additionally downweighing games included from the previous season. $\text{is\_previous\_season}$ is a boolean flag indicating whether a data point is from the previous season.
