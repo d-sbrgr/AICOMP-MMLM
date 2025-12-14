@@ -2,7 +2,7 @@
 
 \newpage
 
-# Introduction
+# Introduction {#sec:introduction}
 
 Organized sports represent a cornerstone of global culture and entertainment. Beyond their intrinsic appeal, the sports industry and its major sporting 
 events have had significant impact on economic growth in China [@wu2024], including the emergence and growth of related industries, such as sports betting [@aga2025]. 
@@ -289,7 +289,21 @@ The seed feature additionally contains the conference region of the team as a pr
 
 ## Exploratory Analysis
 
+Initially, all data sources were checked for missing values and inconsistencies, however neither missing values nor obvious wrong values were found.
+
 ![Regular Season Games Overview](./images/pda/MWGamesOverview.png){#fig:regular-season-games-overview width=80%}
+
+In a second step, several visualizations were created to get a better understanding of the data. @fig:regular-season-games-overview shows multiple sub-plots of general insights about regular season games over the years. Each plot shows insights for both men on the right and women on the left.
+
+The top plots show the total number of games per season, with an upward trend for men from around 3,750 games in 1985 to over 5,500 games in 2025. The women's games show a similar trend starting at around 3,800 games in 1998 to almost 5,500 games in 2025. An obvious outlier for both genders is the 2021 season, which had significantly fewer games due to the COVID-19 pandemic.
+
+The middle plots show both the total points scored in a game in a histogram and the average points scored per game over the years. Both gender's distributions align closely with a normal distribution, but while the women's mean is at 129.4 points per game, the men's average is significantly higher at 141.6 points per game.
+
+The bottom plots show the average points per game over the years, with both genders showing a downward trend starting in the mid-90s until around 2010, after which the average points jumped up again and have been relatively stable since then. While reasons for these patterns are speculation, they could be linked to changes in game rules, playing styles, or coaching strategies over the years.
+
+The most important take-away from these plots is that men's games tend to have higher scores than women's games, but patterns in the scores are similar for both genders.
+
+After having analyzed total scores in regular season matches, the next step was to analyze the score differences between winning and losing teams both in regular season and tournament games. While @fig:regular-season-games-overview included games from 1985 for men and 1998 for women, @fig:score-analysis uses the detailed box-score results described in @sec:regular-season-detailed-results and @sec:tournament-detailed-results starting from 2003 for men and 2010 for women.
 
 ::: {#fig:score-analysis}
 ![Men](./images/pda/MScoreAnalysis.png){width=45%}
@@ -298,7 +312,19 @@ The seed feature additionally contains the conference region of the team as a pr
 Score Analysis for both (a) men and (b) women.
 :::
 
-![Game Location Analysis](./images/pda/MWLocationAnalysis.png){#fig:location-analyis width=80%}
+@fig:score-analysis again shows the same analysis for men in the left plot and women in the right plot. The top plots show the distribution of scores for both winning (blue) and losing (red) teams in regular season games (top-left) and tournament games (top-right). For regular season games, the distribution for both genders align closely with a normal distribution, with winning teams having a higher mean score than losing teams, as expected. The distributions for tournament games do not align as closely with a normal distribution, especially for men's losing scores, which show a right-skewed distribution. This could be due to earlier rounds in tournaments where higher-seeded teams play lower-seeded teams, leading to more lopsided scores.
+
+The bottom plots show the distribution of margins of victory (winning score - losing score) for both regular season games (bottom-left) and tournament games (bottom-right). Overall, most games are close games with a margin of victory below 20 points for both regular season and tournament games. However, there are also a significant number of blowout games with margins above 20 points. These blowouts occur more in women's basketball and especially in women's tournament games. This could hint at a higher team-strength gap in women's than men's basketball in general, but also in the teams that clinch a spot for the final tournament.
+
+Another interesting aspect to sports is the location where games are played and how that affects the outcome. @fig:location-analysis tries to analyze whether NCAA Division I basketball games support the hypothesis that teams perform better on their home court.
+
+![Game Location Analysis](./images/pda/MWLocationAnalysis.png){#fig:location-analysis width=80%}
+
+The left plot in @fig:location-analysis shows the percentage of games won by the home team (left) and away team (right) for both men (blue) and women (orange). Overall, both genders show a significantly higher win percentage for home teams than away teams, with men having a home win percentage of 65.8% and women 61.2%. The right plot supports this finding by showing the average margin of victory for the winning team based on game location. Both genders show the highest margin of victory at home games, then at neutral locations and the lowest margin of victory for away games, again indicating that away-games are harder to win. 
+
+For the NCAA tournaments, all games are played at neutral locations, which lowers the significance of this finding in the context of this project, but for a task where regular season games are predicted game location must definitely be taken into account.
+
+As described in @sec:introduction, teams entering the NCAA tournament are seeded from 1 to 16 within their regional brackets. These seeds are intended to reflect the relative strength of the teams, with lower seeds being stronger teams. An interesting question is how well these seeds reflect the actual outcomes of the games. @fig:seed-upsets shows for both men (left) and women (right) both the win percentage of a given seed with a trend line (left) and the percentage of upsets in a pie chart (right).
 
 ::: {#fig:seed-upsets}
 ![Men](./images/pda/MSeedUpsets.png){width=45%}
@@ -307,13 +333,24 @@ Score Analysis for both (a) men and (b) women.
 Upset rate by seed for both (a) men and (b) women.
 :::
 
+In the left plots of @fig:seed-upsets, a clear downward trend can be observed for both genders, indicating that lower-seeded teams tend to win more often than higher-seeded teams, proving the merit of the seeding criteria. However, there are also some anomalies, that can again be observed for both genders. For example, seeds 1, 11 and 16 are outperforming the trend line, while seeds 8, 13 and 14 are underperforming for both genders. Seeing the same anomalies occur for both genders, hints at structural reasons behind these anomalies, which could be explained through the bracket generation. The entire path a team has to take to win the tournament is determined by their seed and stays the same every year. Therefore, some seeds might have a more difficult path to the championship than others, leading to underperformance compared to the expected win percentage based on seed alone.
+
+The right plots of @fig:seed-upsets show the overall percentage of upsets in tournament games. An upset is defined as a game where the lower-seeded team loses against a higher-seeded team. In the men's tournament, 27.6% of all historical games were upsets, while in the women's tournament the upset rate was significantly lower at 21.1%. This again hints at a higher team-strength gap in women's basketball, leading to fewer upsets.
+
+Finally, the correlation of box-score features for the winning team with the margin of victory was analyzed to get a better understanding of which features are most important in determining the outcome of a game and if there are significant statistical differences in men's and women's basketball. @fig:win-margin-correlation shows the Pearson correlation coefficients of all features of the winning team with the margin of victory for both men (left) and women (right).
+
 ::: {#fig:win-margin-correlation}
 ![Men](./images/pda/MCorrWinMarg.png){width=45%}
-![Women](./images/pda/MCorrWinMarg.png){width=45%}
+![Women](./images/pda/WCorrWinMarg.png){width=45%}
 
 Pearson correlation of features and win margin for both (a) men and (b) women.
 :::
 
+Both genders show the same features having positive and negative correlations with the margin of victory. For both genders, features most positively correlated with margin of victory are field goals made (WFGM) and Assists (WAst). This is intuitive, as making more field goals directly increases a team's score, and assists often indicate effective teamwork and offensive efficiency, leading to higher scoring opportunities. On the other hand, features most negatively correlated with margin of victory are turnovers (WTO) and personal fouls (WPF). This also makes sense, as turnovers result in lost scoring opportunities and can lead to easy points for the opposing team, while personal fouls can disrupt a team's rhythm and lead to free throws for the opponent. 
+
+Surprisingly, attempted free throws (WFTA) as well as made free throws (WFTM) show a negative correlation with margin of victory, although they directly contribute to a team's score. There is no obvious explanation for this phenomenon, but one possible reason could be that free throws are the lowest scoring opportunity in basketball only yielding 1 point per successful attempt. Therefore, teams that rely heavily on free throws might be less efficient overall compared to teams that score more from field goals.
+
+All other positively correlated features such as offensive rebounds (WOR), defensive rebounds (WDR) and 3-point field goals made (WFGM3) also intuitively make sense, as they contribute to a team's scoring ability and overall performance. The strength of correlation with the win margin only slightly differs in men's and women's basketball leading to the conclusion that the overall game dynamics are similar for both genders, and they may be treated similarly in predictive models.
 
 ## Feature Engineering
 Before training the machine learning models, several features were engineered from the raw game data. The aim of these features was to capture the 
