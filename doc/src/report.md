@@ -504,10 +504,10 @@ The window size variable depending on the "DayNum" serving as predictor for the 
 The calculation of the discount factor of a given game is also adapted to the approach in @sec:weighted-season-averages to account for the sliding window and is calculated as follows:
 
 $$
-\text{F}_{weight} = \gamma^{(\text{DayNum}_{game} + \text{Carry} if \text{is_last_season} else 0) - \text{DayNum}_{max}}
+\text{F}_{weight} = \gamma^{(\text{DayNum}_{game} + \text{Carry} if \text{is\_previous\_season} else } 0) - \text{DayNum}_{max}}
 $$
 
-where $\gamma$ is the base discount factor (default = 0.98), $\text{DayNum}_{max}$ the maximum day number in the current window, $\text{DayNum}_{game}$ the day number of the game to be weighted, and $\text{Carry} = 40 + 154 = 194$ is a constant composed of the maximum day number of a season (154) plus a buffer (40) additionally downweighing games included from the previous season.
+where $\gamma$ is the base discount factor (default = 0.98), $\text{DayNum}_{max}$ the maximum day number in the current window, $\text{DayNum}_{game}$ the day number of the game to be weighted, and $\text{Carry} = 40 + 154 = 194$ is a constant composed of the maximum day number of a season (154) plus a buffer (40) additionally downweighing games included from the previous season. $\text{is\_previous\_season}$ is a boolean flag indicating whether a data point is from the previous season.
 
 Finally, similar to @sec:season-averages, target matchup, containing the target variable indicating the winner, is constructed by duplicating the matchup once with team A as the first team and team B as the second team and once vice versa. These constructed matchups are then merged with the calculated sliding window averages for both teams, resulting in a final dataset ready for training and evaluating the machine learning models.
 
