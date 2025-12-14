@@ -352,7 +352,8 @@ Surprisingly, attempted free throws (WFTA) as well as made free throws (WFTM) sh
 
 All other positively correlated features such as offensive rebounds (WOR), defensive rebounds (WDR) and 3-point field goals made (WFGM3) also intuitively make sense, as they contribute to a team's scoring ability and overall performance. The strength of correlation with the win margin only slightly differs in men's and women's basketball leading to the conclusion that the overall game dynamics are similar for both genders, and they may be treated similarly in predictive models.
 
-## Feature Engineering
+## Feature Engineering {#sec:feature-engineering}
+
 Before training the machine learning models, several features were engineered from the raw game data. The aim of these features was to capture the 
 strength of a team, either in their athletic abilities or their mental resilience.
 
@@ -459,26 +460,84 @@ By default, streaks reset between seasons, as team rosters change and performanc
 
 ## Dataset Preparation {#sec:dataset-preparation}
 
+To prepare the dataset for training the machine learning models, three different approaches for aggregating the box-score statistics from @sec:regular-season-detailed-results and the engineered features from @sec:feature-engineering were implemented. These are described in the following sections.
+
 ### Season Averages {#sec:season-averages}
-87 features (ranked)
-67 data points per gender per season
-2345 total data points (matchups)
+
+This dataset preparation approach is inspired by the winning solution of the 2025 Kaggle competition by @odeh2025marchMLMania. It calculates the average of all box-score statistics and engineered features for each team over each entire regular season. Additionally, it calculates the average of all box-score statistics and engineered features for any team's opponents over the entire regular season. These two sets of calculated averages are then saved for every team containing its averages and its opponents' averages. 
+
+During the data-loading process for training and evaluating the machine learning models, features such as "Points Scored", "Season", "DayNum" and "Team ID" are dropped to prevent data leakage. Finally, end-of-season features such as the eventual ELO rating of a team and the Team Quality are added back, since Team Quality does not have an average and the final ELO before the tournament is the most relevant one for predicting tournament outcomes.
+
+Finally, each matchup in the tournament of a given season, containing the target variable indicating the winner, is constructed by duplicating the matchup once with team A as the first team and team B as the second team and once vice versa. This is done to ensure that the machine learning models treat both teams symmetrically and do not learn any bias based on the order of the teams in the matchup. Lastly, the extracted averages for both teams are merged into the matchup data, resulting in a final dataset ready for training and evaluating the machine learning models.
+
+The final dataset contains the following characteristics:
+
+* 87 features
+* 134 data points per gender per season
+* 4690 total data points
 
 ### Weighted Season Averages {#sec:weighted-season-averages}
-87 features (ranked)
-405’732 total samples (matchups)
+
+This dataset preparation approach closely resembles the one described in @sec:season-averages, but instead of calculating simple averages over the entire regular season, weighted averages are calculated where more recent games are weighted more heavily than older games. The discount factor of a given game is calculated as follows:
+
+$$
+\text{F}_{weight} = \gamma^{\text{DayNum}_{max} - \text{DayNum}_{game}}
+$$
+
+where $\gamma$ is the base discount factor (default = 0.99), $\text{DayNum}_{max}$ the maximum day number in the season and $\text{DayNum}_{game}$ the day number of the game to be weighted. This results in games played on the last day of the season having a weight of 1, while games played earlier in the season have exponentially decreasing weights based on how far back they were played.
+
+Additionally to weighting games based on a temporal discount, both regular season and tournament games are added as data points in the final dataset (using the weighted average features of the regular season) and then similar to @sec:season-averages constructed by duplicating each matchup once with team A as the first team and team B as the second team and once vice versa. These constructed matchups are then merged with the calculated weighted season averages for both teams, resulting in a final dataset ready for training and evaluating the machine learning models. This approach significantly increases the number of data points available for training and evaluating the machine learning models.
+
+In hindsight, the question arises whether predicting individual regular season games based on weighted average features of the same regular season has any validity. Surprisingly, as can be seen in @sec:results-weighted-season-averages this approach does seem to have merit.
+
+The final dataset contains the following characteristics:
+
+* 87 features
+* 405’732 total data points
 
 ### Sliding Window Averages {#sec:sliding-window-averages}
-81 features (ranked)
-No seed & streak features
-395’918 total samples (matchups)
+
+The final dataset preparation approach builds upon the weighted season averages described in @sec:weighted-season-averages, but instead of calculating weighted averages over the entire regular season, sliding window averages are calculated for every game day in chronological order, sorted by season and day number, including regular season and tournament games. This means that for each game day, the average of all box-score statistics and engineered features over a fixed window size of previous games is calculated. This allows for more dynamic feature values that can adapt to changes in team strength throughout the season.
+
+The window size variable depending on the "DayNum" serving as predictor for the game. In every case, all games preceding the current "DayNum" in the current season are considered. Additionally, all games from the previous season with "DayNum" greater than the current "DayNum" plus the length of the NCAA tournament (22 days) are also considered. This ensures that the tournament games from the previous season are not included in the prediction of tournament games in the current season.
+
+The calculation of the discount factor of a given game is also adapted to the approach in @sec:weighted-season-averages to account for the sliding window and is calculated as follows:
+
+$$
+\text{F}_{weight} = \gamma^{(\text{DayNum}_{game} + \text{Carry} if \text{is_last_season} else 0) - \text{DayNum}_{max}}
+$$
+
+where $\gamma$ is the base discount factor (default = 0.98), $\text{DayNum}_{max}$ the maximum day number in the current window, $\text{DayNum}_{game}$ the day number of the game to be weighted, and $\text{Carry} = 40 + 154 = 194$ is a constant composed of the maximum day number of a season (154) plus a buffer (40) additionally downweighing games included from the previous season.
+
+Finally, similar to @sec:season-averages, target matchup, containing the target variable indicating the winner, is constructed by duplicating the matchup once with team A as the first team and team B as the second team and once vice versa. These constructed matchups are then merged with the calculated sliding window averages for both teams, resulting in a final dataset ready for training and evaluating the machine learning models.
+
+Due to the nature of this approach a certain amount of past games is required to calculate the sliding window averages. Therefore, only games starting from the first tournament in the dataset where enough past games are available are included in the final dataset.
+
+The final dataset contains the following characteristics:
+
+* 81 features (No seed & streak features)
+* 395’918 total data points
 
 ## Feature Importance {#sec:feature-importance}
 
+As described in @sec:dataset-preparation, each of the three dataset preparation approaches results in over 80 features for every matchup. To minimize overfitting and improve computational efficiency, all features were ranked based on their importance, allowing for the number of features used for training a given machine learning model to be included as a hyperparameter during model training.
+
+The feature importance ranking was calculated using a XGBoost model [@Chen2016] trained on the respective dataset preparation approach including all features. In total 400 boosting rounds with a maximal depth of 6 and a learning rate of 0.01 were used to ensure that the model learned to use all features. From the split statistics of the trained model, the feature importance ranking was extracted based on the gain metric, which measures the improvement in accuracy brought by a feature to the branches it is on. 
+
+For every feature the mean, median and maximum gain scores were extracted and then normalized to the range $[0, 1]$. Eventually, for every feature a score was calculated as follows:
+
+$$
+\text{F}_{Score} = \text{F}_{Count} \cdot (\text{G}_{Mean} + \text{G}_{Median} + \text{G}_{Max})
+$$
+
+where $\text{F}_{Count}$ is the number of times the feature was used in a split, and $\text{G}_{Mean}$, $\text{G}_{Median}$ and $\text{G}_{Max}$ are the normalized mean, median and maximum gain scores respectively. The features were then ranked based on this score in descending order, resulting in a final feature importance ranking for each dataset preparation approach.
+
 ### Default Features {#sec:default-features}
 
+To validate the feature importance ranking described in @sec:feature-importance, a default set of features was selected and additional experiments were conducted on these default features. The set of default features consists of the intersection of features used in the winning Kaggle competition solution by @odeh2025marchMLMania and the features available in each data loading approach.
+
 # Methods
-This section describes the various approaches used during the project, starting with statistical approaches to several machine learning methods.
+This section describes the various modelling approaches used during the project, starting with statistical approaches to several machine learning methods.
 
 ## Statistical Approaches {#sec:statistical-approaches}
 To establish a baseline for our machine learning approaches, we implemented several statistical approaches. All of these models were based on the entire compact regular or tourney season results described in @sec:data.
@@ -548,9 +607,9 @@ Machine learning models of the following types were trained during the course of
 XGBoost and CatBoost were implemented using their respective Python libraries [@xgboost-website; @catboost-website], while scikit-learn [@scikit-learn-website] was used for the other models. Each of these models has its own set of hyperparameters that were considered during their respective experiments.
 
 ### Ensemble Training Strategy {#sec:ensemble-training-strategy}
-For these classical machine learning models, an ensemble training approach was implemented where multiple models are trained on different seasons independently, and their predictions are averaged during inference. This temporal ensemble strategy tries to counteract overfitting to a single season.
+For these classical machine learning models, an ensemble training approach was implemented. In this approach, in combination with the data loading approach of @sec:season-averages each season was used once as validation data and a model trained with all other seasons as training data. 
 
-@TODO: @Dave - you'll no better how to elaborate on this
+At inference time, the average of the predictions by the individual model is used as the final prediction. This temporal ensemble strategy tries to counteract overfitting by only using a single season as validation data.
 
 ## Neural Networks
 As a final modelling approach, deep learning techniques were explored. The main idea was that a deep enough neural network (NN) could extract more features from the already existing ones and thus make better predictions than the classical machine learning models (@sec:classical-machine-learning-models), especially on the larger datasets (@sec:dataset-preparation).
@@ -662,7 +721,9 @@ The split into training and validation set depends on the experiment type. @tbl:
 
 ### Ensemble Data Split {#sec:ensemble-data-split}
 
-@TODO: @Dave - implement this
+Similarly to the data split for the Season Averages experiments (@sec:season-averages), all other seasons except one are used as training data and the remaining season as validation data. However, an ensemble of models is trained with every season used as validation data once to train one model.
+
+For example, with seasons 2003-2024 available, one model is trained with seasons 2003-2023 as training data and season 2024 as validation data, another model is trained with seasons 2003-2022 and 2024 as training data and season 2023 as validation data, and so on.
 
 # Results {#sec:results}
 
