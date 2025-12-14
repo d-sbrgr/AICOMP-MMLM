@@ -354,13 +354,13 @@ All other positively correlated features such as offensive rebounds (WOR), defen
 
 ## Feature Engineering
 Before training the machine learning models, several features were engineered from the raw game data. The aim of these features was to capture the 
-performance of a team, both in their athletic abilities and mental strength.
+strength of a team, either in their athletic abilities or their mental resilience.
 
 ### ELO Rating {#sec:elo-rating}
-[@Elo1978]
-@TODO: @Dave - needs checking and amending. Plus reference at the right spot
 
-The ELO rating system is a method for calculating the relative skill levels of players or teams in competitive games. In the context of NCAA basketball, each team is assigned an ELO rating that is updated after each game based on the outcome and the expected probability of winning. The win probability for a matchup between team $A$ and team $B$ is calculated using the logistic function:
+The ELO rating system is a method for calculating the relative skill levels of players in the context of chess proposed by @Elo1978. It has since been adapted for various sports, including basketball.
+
+Since the ELO system is a proven system in the world of chess and various other sports, the hope is that this translates to indicating the team strength for basketball games. In the context of NCAA basketball, the entire history of regular season and tournament games from @sec:data is processed in chronological order, sorted by season and day number, to ensure accurate sequential updating. Initially, each team is assigned a base ELO rating (1,000) and from there that rating is updated after each game based on the outcome and the expected probability of winning. The win probability for a matchup between team $A$ and team $B$ is calculated using the logistic function:
 
 $$
 P(A \text{ beats } B) = \frac{1}{1 + 10^{(R_B - R_A)/400}}
@@ -374,25 +374,88 @@ $$
 
 where $K$ is a constant that determines how much ratings change after each game (typically set between 16 and 32), and $S_A$ is the actual outcome (1 for a win, 0 for a loss). The same update is applied symmetrically to team $B$.
 
-### Team Quality
-
-### ELO Delta Sliding Window
-The ELO Delta Sliding Window feature captures the change in a team's ELO rating over a specified window of games. The idea behind it was to capture the mentality of a team, as a team's confidence, and with that their performance, might increase or decrease with the change in ELO. The ELO delta is calculated as such: $\Delta \text{R}_w = \text{R}_{\text{current}} - \text{R}_{w}$, where $\text{R}_{\text{current}}$ is the team's ELO rating at the current game and $\text{R}_{w}$ is their ELO rating $w$ games prior.
-
-Different window sizes $w$ were considered and ultimately chosen with a grid search that tries to maximize the improvement of the brier score of the raw ELO predictions in @sec:elo-rating. The following formula was used to calculate the predictions:
+After thorough experimentation two additional changes were made to the traditional ELO rating system explained above. First, win-margins were taken into account to adjust the K-factor dynamically based on how decisive a victory was. This means that a team winning by a large margin would gain more ELO points than a team winning by a small margin, reflecting the dominance of the performance. Similarly, a team losing by a large margin would lose more ELO points than a team losing by a small margin. The adjusted K-factor is calculated as follows:
 
 $$
-P(A \text{ beats } B) = \frac{1}{1 + 10^{(R_B + \omega \cdot \Delta R_{B,w} - R_A + \omega \cdot \Delta R_{A,w})/400}}
+K_{adj} = K \cdot ln(|M| + 1)
 $$
 
-Where $\omega$ is a weight for the delta adjustment. Given this formula the difference of the brier score between the adjusted ELO predictions and the raw ELO predictions was calculated for different window sizes $w$ and weights $\omega$. The pair that maximizes $\text{Brier}_{\text{raw}} - \text{Brier}_{\text{adjusted}}$ was then chosen to use for the final feature; window size $w = 3$ with a weight of $\omega = 0.1$.
+where $K$ is the base K-factor (20) and $M$ is the margin of victory.
 
-### Win Streaks
+Second, on season roll-overs, e.g. from the end of the 2023 season to the start of the 2024 season, all teams' ELO ratings were regressed towards the mean rating of 1,000. This was done to account for roster changes and other off-season factors that could significantly alter a team's strength from one season to the next. The regression was done as follows:
 
-## Feature Importance {#sec:feature-importance}
+$$
+R_{new} = R_{old} \cdot (1 - r) + 1000 \cdot r
+$$
 
-### Default Features {#sec:default-features}
+where $r$ is the regression factor (0.25) determining how much a team's rating is pulled towards the base ELO.
 
+### Team Quality {#sec:team-quality}
+
+Team quality ratings provide a statistical measure of team strength based on game outcomes, similar to how the ELO system captures relative skill. However, while ELO focuses on win probabilities through dynamic rating updates, the quality metric directly estimates each team's expected point contribution in a matchup using Generalized Linear Models (GLMs) [@nelder2018]. This approach builds on the GLM-based team strength estimation methods discussed by @habib2025, who demonstrated that combining such metrics with ELO ratings enhances model performance across multiple architectures.
+
+The quality rating represents a team's strength measured in points. A positive quality indicates a team that tends to outscore opponents, while a negative quality suggests a team that typically gets outscored. The difference in quality ratings between two teams approximates the expected point margin in their matchup. For example, if team $A$ has a quality of $+15$ and team $B$ has a quality of $+5$, we would expect team $A$ to win by approximately $10$ points.
+
+To compute quality ratings, a GLM with Gaussian family is fitted to regular season game data using the formula:
+
+$$
+\text{Points}_{Diff} \sim -1 + \text{T1} + \text{T2}
+$$
+
+where $\text{Points}_{Diff}$ represents the point difference (team A's score minus team B's score), and $\text{T1}$ and $\text{T2}$ are categorical variables representing the teams. The model includes no intercept ($-1$) because the point differential should be zero when two equally strong teams play. This regression estimates each team's contribution to the point differential, effectively extracting a quality rating for every team.
+
+To ensure the model treats team strength symmetrically regardless of which team is labeled as T1 or T2, each game is duplicated in the dataset with teams swapped. For instance, if team $A$ defeats team $B$ with scores 75-68, the dataset includes both the original game ($T1$=$A$, $T2$=$B$, $\text{Points}_{Diff}$=$+7$) and its swap ($T1$=$B$, $T2$=$A$, $\text{Points}_{Diff}$=$-7$). This redundancy forces the regression to learn that a team's strength is independent of its positional label.
+
+An important preprocessing step adjusts scores for overtime games to normalize all games to the standard 40-minute duration. For a game with $n$ overtime periods, scores are scaled by the factor:
+
+$$
+\text{F}_{adj} = \frac{40}{40 + 5n}
+$$
+
+where each overtime period adds 5 minutes. This normalization ensures that quality ratings reflect per-minute team strength rather than being inflated by extended play.
+
+Quality ratings are computed separately for each season, as team rosters change annually and a team's strength can vary significantly from year to year. Following the approach described by @habib2025, who emphasized the importance of temporal considerations in team strength metrics, our implementation processes each season independently to capture these year-to-year variations in team quality.
+
+Additionally, for the data preparation process described in @sec:sliding-window-averages, quality ratings are recalculated after each game day, including all games in the window size, to ensure that the most recent team strength estimates are used when generating features for upcoming games. This dynamic updating aligns with the temporal nature of sports performance and allows the model to leverage the latest information about team capabilities.
+
+### ELO Delta Sliding Window {#sec:elo-delta-window}
+
+The ELO Delta Sliding Window feature captures the change in a team's ELO rating over a specified window of recent games, providing a measure of recent performance momentum beyond the absolute ELO rating itself. This feature is motivated by the hypothesis that a team's confidence and performance may be influenced not only by their overall strength but also by their recent trajectory and the rate of that trajectory. The concept of momentum in sports performance has been explored in various contexts, and incorporating dynamic changes in team ratings can capture psychological and performance trends that static ratings miss.
+
+For each game, the ELO delta is calculated as:
+
+$$
+\Delta R_w = R_{\text{current}} - R_{w}
+$$
+
+where $R_{\text{current}}$ is the team's ELO rating at the current game and $R_{w}$ is their ELO rating $w$ games prior. A positive delta indicates improving performance, while a negative delta suggests declining performance. Teams with insufficient game history (fewer than $w$ games) are assigned a delta of zero, as there is no meaningful prior reference point.
+
+To determine the optimal window size $w$ and its contribution weight $\omega$, a grid search was conducted to maximize the improvement in Brier score when incorporating the delta adjustment into ELO-based predictions. The adjusted win probability for a matchup between teams $A$ and $B$ is calculated as:
+
+$$
+P(A \text{ beats } B) = \frac{1}{1 + 10^{(R_B + \omega \cdot \Delta R_{B,w} - R_A - \omega \cdot \Delta R_{A,w})/400}}
+$$
+
+where $\omega$ weights the delta adjustment relative to the base ELO ratings. The grid search evaluated various combinations of window sizes and weights, selecting the pair that maximized $\text{Brier}_{\text{raw}} - \text{Brier}_{\text{adjusted}}$, where $\text{Brier}_{\text{raw}}$ represents the Brier score using only base ELO ratings and $\text{Brier}_{\text{adjusted}}$ uses the delta-enhanced predictions.
+
+The optimal configuration was found to be a window size of $w = 3$ games with a weight of $\omega = 0.1$. This indicates that recent performance over the last three games provides meaningful predictive signal, though the effect is modest (weight of 0.1) compared to the base ELO ratings. This aligns with findings from @gomez2024, who discussed how temporal dynamics in rating systems can enhance predictive performance while maintaining interpretability.
+
+The window tracking resets between seasons by default, ensuring that a team's momentum from one season does not inappropriately carry over to the next season when rosters and team compositions have changed. This seasonal reset parallels the ELO regression approach described in @sec:elo-rating and ensures that momentum features reflect current team dynamics rather than stale historical patterns.
+
+### Win Streaks {#sec:win-streaks}
+
+Win and loss streaks represent a team's recent performance momentum, capturing the psychological and performance aspects of consecutive wins or losses that may influence future game outcomes. While the ELO delta feature in @sec:elo-delta-window tracks rating changes, win streaks provide a complementary perspective by focusing on the binary outcome sequence itself, i.e. how many games a team has won or lost in a row, independent of the margin of victory or opponent strength.
+
+The motivation for including win streaks as a feature stems from research on momentum effects in sports, where teams on winning streaks may exhibit increased confidence and cohesion, while teams on losing streaks may suffer from decreased morale or tactical difficulties [@kim2023]. While such psychological effects are difficult to measure directly, the streak feature provides a simple proxy that machine learning models can leverage to capture patterns where recent consecutive outcomes influence future performance beyond what absolute team strength metrics predict.
+
+For each game in the dataset, the win streak feature calculates the team's current streak of consecutive wins (represented as a positive integer) or consecutive losses (represented as a negative integer). A team entering a game on a five-game winning streak would have a streak value of $+5$, while a team that has lost three consecutive games would have a streak value of $-3$. At any point in time, each team has a single streak value that is either positive (wins), negative (losses), or zero (no prior games or at a streak transition point).
+
+The streak calculation processes games in chronological order as also done in @sec:elo-rating. For each game, before updating the streak values with the current game's outcome, the current streaks for both the winning and losing teams are recorded. After recording, the streaks are updated according to the game result:
+
+- Winning team: $\text{streak} := max(1, \text{streak} + 1)$
+- Losing team: $\text{streak} := min(-1, \text{streak} - 1)$
+
+By default, streaks reset between seasons, as team rosters change and performance from the previous season does not meaningfully continue into the new season. This seasonal reset is consistent with the temporal separation applied to other features like ELO ratings and quality metrics, ensuring that features reflect current team dynamics.
 
 ## Dataset Preparation {#sec:dataset-preparation}
 
@@ -410,6 +473,9 @@ Where $\omega$ is a weight for the delta adjustment. Given this formula the diff
 No seed & streak features
 395’918 total samples (matchups)
 
+## Feature Importance {#sec:feature-importance}
+
+### Default Features {#sec:default-features}
 
 # Methods
 This section describes the various approaches used during the project, starting with statistical approaches to several machine learning methods.
