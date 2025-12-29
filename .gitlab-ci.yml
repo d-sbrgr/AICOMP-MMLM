@@ -12,7 +12,6 @@ variables:
 
 stages:
   - lint
-  - build
   - submit
   - results
 
@@ -71,16 +70,3 @@ fetch_kaggle_results:
     paths:
       - submissions.txt
     expire_in: 7 days
-
-build_report:
-  stage: build
-  image: $CI_REGISTRY_IMAGE/code:latest
-  before_script:
-    - cd doc
-    - mkdir _build
-  script:
-    - pandoc src/report.md --defaults defaults.yaml -o _build/report.pdf
-  artifacts:
-    paths:
-      - doc/_build/report.pdf
-    expire_in: 1 day
