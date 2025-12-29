@@ -74,7 +74,7 @@ fetch_kaggle_results:
 
 build_report:
   stage: build
-  image: $CI_REGISTRY/code:latest
+  image: $CI_REGISTRY_IMAGE/code:latest
   before_script:
     - cd doc
     - mkdir _build
