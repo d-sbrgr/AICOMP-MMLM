@@ -33,6 +33,7 @@ $endif$
 
 % Define custom date format
 \newdateformat{customdate}{\THEDAY-\shortmonthname[\THEMONTH]-\THEYEAR}
+\newdateformat{titledate}{\THEDAY. \monthname[\THEMONTH] \THEYEAR}
 
 % Table packages
 \usepackage{array}
@@ -315,6 +316,67 @@ $endif$
 % Document Body
 % ============================================================================
 \begin{document}
+
+% ============================================================================
+% Title Page
+% ============================================================================
+\begin{titlepage}
+    \centering
+
+    % Logo at the top
+    $if(doc-logo)$
+    \includegraphics[width=0.35\textwidth]{$doc-logo$}
+    \vspace{1.5cm}
+    $endif$
+
+    % Course and Semester
+    {\Large\bfseries $doc-course$ -- $doc-semester$\par}
+    \vspace{0.5cm}
+    {\large $doc-institution$\par}
+    \vspace{2cm}
+
+    % Title
+    {\Huge\bfseries $doc-title$\par}
+    \vspace{0.5cm}
+    {\LARGE $doc-subtitle$\par}
+    \vspace{2.5cm}
+
+    % Authors Section
+    {\large\bfseries Authors\par}
+    \vspace{0.3cm}
+    {\large
+    $doc-author1-name$\\
+    \texttt{$doc-author1-email$}\\[0.3cm]
+    $doc-author2-name$\\
+    \texttt{$doc-author2-email$}
+    \par}
+    \vspace{1.5cm}
+
+    % Advisor and Module Head Section
+    {\large\bfseries Advisor\par}
+    \vspace{0.3cm}
+    {\large
+    $doc-advisor-name$\\
+    \texttt{$doc-advisor-email$}
+    \par}
+    \vspace{0.8cm}
+
+    {\large\bfseries Module Head\par}
+    \vspace{0.3cm}
+    {\large
+    $doc-modulehead-name$\\
+    \texttt{$doc-modulehead-email$}
+    \par}
+
+    \vfill
+
+    % Date at the bottom
+    {\large \titledate\today \par}
+
+\end{titlepage}
+
+% Clear page style for title page
+\thispagestyle{empty}
 
 % Table of Contents (if enabled)
 $if(toc)$
