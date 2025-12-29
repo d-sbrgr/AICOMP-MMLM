@@ -2,7 +2,7 @@
 
 \newpage
 
-# Introduction
+# Introduction {#sec:introduction}
 
 Organized sports represent a cornerstone of global culture and entertainment. Beyond their intrinsic appeal, the sports industry and its major sporting 
 events have had significant impact on economic growth in China [@wu2024], including the emergence and growth of related industries, such as sports betting [@aga2025]. 
@@ -230,17 +230,138 @@ defeat favorites, indicates that current approaches may not fully capture the fa
 
 # Data {#sec:data}
 
+The dataset used for this project was obtained from the Kaggle competition "March Machine Learning Mania 2025" [@mmlm2025]. 
+It consists of a total of 36 CSV files containing various information about NCAA Division I basketball games, teams, venues, coaches and tournaments.
+
+## Data Description {#sec:data-description}
+
+For this project, only a subset of the data available was used. All data used contains historical information up to and including the 2025 regular season. These are described in the following sections.
+
+### Regular Season Detailed Results {#sec:regular-season-detailed-results}
+
+The regular season detailed results contain basic game information as well as box-score statistics for every NCAA Division I basketball game played in the regular season. For men's basketball the available data starts with the 2003 season and for women's basketball with the 2010 season. @tbl:regular-season-detailed-results describes the features available in this dataset. Features containing \[WL\] in their name are available for both the winning and losing team of a game, e.g. "WTeamID" and "LTeamID" for the winning and losing team IDs respectively.
+
+| Feature      | Description                              |
+|--------------|------------------------------------------|
+| Season       | The season in which the game was played  |
+| DayNum       | The day number within the season (1-133) |
+| \[WL\]TeamID | The ID of the team                       |
+| \[WL\]Score  | The score of the team                    |
+| WLoc         | The location of the winning team (H/A/N) |
+| NumOT        | Number of overtime periods played        |
+| \[WL\]FGM    | Field Goals Made                         |
+| \[WL\]FGA    | Field Goals Attempted                    |
+| \[WL\]FGM3   | 3-Point Field Goals Made                 |
+| \[WL\]FGA3   | 3-Point Field Goals Attempted            |
+| \[WL\]FTM    | Free Throws Made                         |
+| \[WL\]FTA    | Free Throws Attempted                    |
+| \[WL\]OR     | Offensive Rebounds                       |
+| \[WL\]DR     | Defensive Rebounds                       | 
+| \[WL\]Ast    | Assists                                  |
+| \[WL\]TO     | Turnovers                                |
+| \[WL\]Stl    | Steals                                   |
+| \[WL\]Blk    | Blocks                                   |
+| \[WL\]PF     | Personal Fouls                           |
+
+: Features of the Regular Season Detailed Results {#tbl:regular-season-detailed-results}
+
+The men's dataset contains a total of 118,882 unique games and the women's dataset 81,708 respectively.
+
+### Tournament Detailed Results {#sec:tournament-detailed-results}
+
+The tournament detailed results contains the same features as described in @sec:regular-season-detailed-results, however for games played in the NCAA Division I basketball tournaments. For men's basketball the available data starts at the 2003 season and for women's basketball at the 2010 respectively. The features are identical to those described in @tbl:regular-season-detailed-results except for `DayNum` which ranges from 134 to 154, representing the tournament game days.
+
+The men's dataset contains a total of 1,382 unique games and the women's dataset 894 respectively.
+
+### Tournament Seeds
+
+The tournament seeds dataset contains the seed information for every team that participated in the NCAA Division I basketball tournaments. As can be seen in @tbl:tournament-seeds, the dataset contains the season, seed and team ID for every team that participated in the tournament for that season. For the men the available data starts at the 1985 season and for the women at the 1998 season respectively, however only data overlapping the range of the detailed results in @sec:regular-season-detailed-results and @sec:tournament-detailed-results was used.
+
+| Feature     | Description                              |
+|-------------|------------------------------------------|
+| Season      | The season in which the game was played  |
+| Seed        | The seed of the team in the tournament   |
+| TeamID      | The ID of the team                       |
+
+: Features of the Tournament Seeds {#tbl:tournament-seeds}
+
+The seed feature additionally contains the conference region of the team as a prefix (e.g. `W01` for West region, seed 1). This was stripped and only the numerical seed value was used for this project.
+
 ## Exploratory Analysis
 
-## Feature Engineering
+Initially, all data sources were checked for missing values and inconsistencies, however neither missing values nor obvious wrong values were found. As mentioned in @sec:data-description, model training was only done on the detailed results datasets from @sec:regular-season-detailed-results and @sec:tournament-detailed-results, spanning from 2003 and 2010 to 2025 respectively. However, for the exploratory data analysis all available regular season data (not including detailed box-score statistics) from 1985 for men and 1998 for women was used to get a better understanding of general patterns in NCAA Division I basketball games over the years.
+
+![Regular Season Games Overview](./images/pda/MWGamesOverview.png){#fig:regular-season-games-overview width=80%}
+
+In a second step, several visualizations were created to get a better understanding of the data. @fig:regular-season-games-overview shows multiple sub-plots of general insights about regular season games over the years. Each plot shows insights for both men on the right and women on the left.
+
+The top plots show the total number of games per season, with an upward trend for men from around 3,750 games in 1985 to over 5,500 games in 2025. The women's games show a similar trend starting at around 3,800 games in 1998 to almost 5,500 games in 2025. An obvious outlier for both genders is the 2021 season, which had significantly fewer games due to the COVID-19 pandemic.
+
+The middle plots show both the total points scored in a game in a histogram and the average points scored per game over the years. Both gender's distributions align closely with a normal distribution, but while the women's mean is at 129.4 points per game, the men's average is significantly higher at 141.6 points per game.
+
+The bottom plots show the average points per game over the years, with both genders showing a downward trend starting in the mid-90s until around 2010, after which the average points jumped up again and have been relatively stable since then. While reasons for these patterns are speculation, they could be linked to changes in game rules, playing styles, or coaching strategies over the years.
+
+The most important take-away from these plots is that men's games tend to have higher scores than women's games, but patterns in the scores are similar for both genders.
+
+After having analyzed total scores in regular season matches, the next step was to analyze the score differences between winning and losing teams both in regular season and tournament games. While @fig:regular-season-games-overview included games from 1985 for men and 1998 for women, @fig:score-analysis uses the detailed box-score results described in @sec:regular-season-detailed-results and @sec:tournament-detailed-results starting from 2003 for men and 2010 for women.
+
+::: {#fig:score-analysis}
+![Men](./images/pda/MScoreAnalysis.png){width=45%}
+![Women](./images/pda/WScoreAnalysis.png){width=45%}
+
+Score Analysis for both (a) men and (b) women.
+:::
+
+@fig:score-analysis again shows the same analysis for men in the left plot and women in the right plot. The top plots show the distribution of scores for both winning (blue) and losing (red) teams in regular season games (top-left) and tournament games (top-right). For regular season games, the distribution for both genders align closely with a normal distribution, with winning teams having a higher mean score than losing teams, as expected. For tournament games, also align closely with a normal distribution, but it is less pronounced, likely due to the lower amount of games on record. One minor deviation from the normal distribution is shown in the men's losing scores, which show a slight right-skewed distribution. This could be due to earlier rounds in tournaments where higher-seeded teams play lower-seeded teams, leading to more lopsided scores.
+
+The bottom plots show the distribution of margins of victory (winning score - losing score) for both regular season games (bottom-left) and tournament games (bottom-right). Overall, most games are close games with a margin of victory below 20 points for both regular season and tournament games. However, there are also a significant number of blowout games with margins above 20 points. These blowouts occur more in women's basketball and especially in women's tournament games. This could hint at a higher team-strength gap in women's than men's basketball in general, but also in the teams that clinch a spot for the final tournament.
+
+Another interesting aspect to sports is the location where games are played and how that affects the outcome. @fig:location-analysis tries to analyze whether NCAA Division I basketball games support the hypothesis that teams perform better on their home court.
+
+![Game Location Analysis](./images/pda/MWLocationAnalysis.png){#fig:location-analysis width=80%}
+
+The left plot in @fig:location-analysis shows the percentage of games won by the home team (left) and away team (right) for both men (blue) and women (orange). Overall, both genders show a significantly higher win percentage for home teams than away teams, with men having a home win percentage of 65.8% and women 61.2%. The right plot supports this finding by showing the average margin of victory for the winning team based on game location. Both genders show the highest margin of victory at home games, then at neutral locations and the lowest margin of victory for away games, again indicating that away-games are harder to win. 
+
+For the NCAA tournaments, all games are played at neutral locations, which lowers the significance of this finding in the context of this project, but for a task where regular season games are predicted game location must definitely be taken into account.
+
+As described in @sec:introduction, teams entering the NCAA tournament are seeded from 1 to 16 within their regional brackets. These seeds are intended to reflect the relative strength of the teams, with lower seeds being stronger teams. An interesting question is how well these seeds reflect the actual outcomes of the games. @fig:seed-upsets shows for both men (left) and women (right) both the win percentage of a given seed with a trend line (left) and the percentage of upsets in a pie chart (right).
+
+::: {#fig:seed-upsets}
+![Men](./images/pda/MSeedUpsets.png){width=45%}
+![Women](./images/pda/WSeedUpsets.png){width=45%}
+
+Upset rate by seed for both (a) men and (b) women.
+:::
+
+In the left plots of @fig:seed-upsets, a clear downward trend can be observed for both genders, indicating that lower-seeded teams tend to win more often than higher-seeded teams, proving the merit of the seeding criteria. However, there are also some anomalies, that can again be observed for both genders. For example, seeds 1, 11 and 16 are outperforming the trend line, while seeds 8, 13 and 14 are underperforming for both genders. Seeing the same anomalies occur for both genders, hints at structural reasons behind these anomalies, which could be explained through the bracket generation. The entire path a team has to take to win the tournament is determined by their seed and stays the same every year. Therefore, some seeds might have a more difficult path to the championship than others, leading to underperformance compared to the expected win percentage based on seed alone.
+
+The right plots of @fig:seed-upsets show the overall percentage of upsets in tournament games. An upset is defined as a game where the lower-seeded team loses against a higher-seeded team. In the men's tournament, 27.6% of all historical games were upsets, while in the women's tournament the upset rate was significantly lower at 21.1%. This again hints at a higher team-strength gap in women's basketball, leading to fewer upsets.
+
+Finally, the correlation of box-score features for the winning team with the margin of victory was analyzed to get a better understanding of which features are most important in determining the outcome of a game and if there are significant statistical differences in men's and women's basketball. @fig:win-margin-correlation shows the Pearson correlation coefficients of all features of the winning team with the margin of victory for both men (left) and women (right).
+
+::: {#fig:win-margin-correlation}
+![Men](./images/pda/MCorrWinMarg.png){width=45%}
+![Women](./images/pda/WCorrWinMarg.png){width=45%}
+
+Pearson correlation of features and win margin for both (a) men and (b) women.
+:::
+
+Both genders show the same features having positive and negative correlations with the margin of victory. For both genders, features most positively correlated with margin of victory are field goals made (WFGM) and Assists (WAst). This is intuitive, as making more field goals directly increases a team's score, and assists often indicate effective teamwork and offensive efficiency, leading to higher scoring opportunities. On the other hand, features most negatively correlated with margin of victory are turnovers (WTO) and personal fouls (WPF). This also makes sense, as turnovers result in lost scoring opportunities and can lead to easy points for the opposing team, while personal fouls can disrupt a team's rhythm and lead to free throws for the opponent. 
+
+Surprisingly, attempted free throws (WFTA) as well as made free throws (WFTM) show a negative correlation with margin of victory, although they directly contribute to a team's score. There is no obvious explanation for this phenomenon, but one possible reason could be that free throws are the lowest scoring opportunity in basketball only yielding 1 point per successful attempt. Therefore, teams that rely heavily on free throws might be less efficient overall compared to teams that score more from field goals.
+
+All other positively correlated features such as offensive rebounds (WOR), defensive rebounds (WDR) and 3-point field goals made (WFGM3) also intuitively make sense, as they contribute to a team's scoring ability and overall performance. The strength of correlation with the win margin only slightly differs in men's and women's basketball leading to the conclusion that the overall game dynamics are similar for both genders, and they may be treated similarly in predictive models.
+
+## Feature Engineering {#sec:feature-engineering}
+
 Before training the machine learning models, several features were engineered from the raw game data. The aim of these features was to capture the 
-performance of a team, both in their athletic abilities and mental strength.
+strength of a team, either in their athletic abilities or their mental resilience.
 
 ### ELO Rating {#sec:elo-rating}
-[@Elo1978]
-@TODO: @Dave - needs checking and amending. Plus reference at the right spot
 
-The ELO rating system is a method for calculating the relative skill levels of players or teams in competitive games. In the context of NCAA basketball, each team is assigned an ELO rating that is updated after each game based on the outcome and the expected probability of winning. The win probability for a matchup between team $A$ and team $B$ is calculated using the logistic function:
+The ELO rating system is a method for calculating the relative skill levels of players in the context of chess proposed by @Elo1978. It has since been adapted for various sports, including basketball.
+
+Since the ELO system is a proven system in the world of chess and various other sports, the hope is that this translates to indicating the team strength for basketball games. In the context of NCAA basketball, the entire history of regular season and tournament games from @sec:data is processed in chronological order, sorted by season and day number, to ensure accurate sequential updating. Initially, each team is assigned a base ELO rating (1,000) and from there that rating is updated after each game based on the outcome and the expected probability of winning. The win probability for a matchup between team $A$ and team $B$ is calculated using the logistic function:
 
 $$
 P(A \text{ beats } B) = \frac{1}{1 + 10^{(R_B - R_A)/400}}
@@ -254,48 +375,177 @@ $$
 
 where $K$ is a constant that determines how much ratings change after each game (typically set between 16 and 32), and $S_A$ is the actual outcome (1 for a win, 0 for a loss). The same update is applied symmetrically to team $B$.
 
-### Team Quality
-
-### ELO Delta Sliding Window
-The ELO Delta Sliding Window feature captures the change in a team's ELO rating over a specified window of games. The idea behind the it was to capture the mentality of a team, as a team's confidence, and with that their performance, might increase or decrease with the change in ELO. The ELO delta is calculated as such: $\Delta \text{R}_w = \text{R}_{\text{current}} - \text{R}_{w}$, where $\text{R}_{\text{current}}$ is the team's ELO rating at the current game and $\text{R}_{w}$ is their ELO rating $w$ games prior.
-
-Different window sizes $w$ were considered and ultimately chosen with a grid search that tries to maximize the improvement of the brier score of the raw ELO predictions in @sec:elo-rating. The following formula was used to calculate the predictions:
+After thorough experimentation two additional changes were made to the traditional ELO rating system explained above. First, win-margins were taken into account to adjust the K-factor dynamically based on how decisive a victory was. This means that a team winning by a large margin would gain more ELO points than a team winning by a small margin, reflecting the dominance of the performance. Similarly, a team losing by a large margin would lose more ELO points than a team losing by a small margin. The adjusted K-factor is calculated as follows:
 
 $$
-P(A \text{ beats } B) = \frac{1}{1 + 10^{(R_B + \omega \cdot \Delta R_{B,w} - R_A + \omega \cdot \Delta R_{A,w})/400}}
+K_{adj} = K \cdot ln(|M| + 1)
 $$
 
-Where $\omega$ is a weight for the delta adjustment. Given this formula the difference of the brier score between the adjusted ELO predictions and the raw ELO predictions was calculated for different window sizes $w$ and weights $\omega$. The pair that maximizes $\text{Brier}_{\text{raw}} - \text{Brier}_{\text{adjusted}}$ was then chosen to use for the final feature; window size $w = 3$ with a weight of $\omega = 0.1$.
+where $K$ is the base K-factor (20) and $M$ is the margin of victory.
 
-### Win Streaks
+Second, on season roll-overs, e.g. from the end of the 2023 season to the start of the 2024 season, all teams' ELO ratings were regressed towards the mean rating of 1,000. This was done to account for roster changes and other off-season factors that could significantly alter a team's strength from one season to the next. The regression was done as follows:
 
+$$
+R_{new} = R_{old} \cdot (1 - r) + 1000 \cdot r
+$$
 
-## Feature Importance {#sec:feature-importance}
+where $r$ is the regression factor (0.25) determining how much a team's rating is pulled towards the base ELO.
 
-### Default Features {#sec:default-features}
+### Team Quality {#sec:team-quality}
 
+Team quality ratings provide a statistical measure of team strength based on game outcomes, similar to how the ELO system captures relative skill. However, while ELO focuses on win probabilities through dynamic rating updates, the quality metric directly estimates each team's expected point contribution in a matchup using Generalized Linear Models (GLMs) [@nelder2018]. This approach builds on the GLM-based team strength estimation methods discussed by @habib2025, who demonstrated that combining such metrics with ELO ratings enhances model performance across multiple architectures.
+
+The quality rating represents a team's strength measured in points. A positive quality indicates a team that tends to outscore opponents, while a negative quality suggests a team that typically gets outscored. The difference in quality ratings between two teams approximates the expected point margin in their matchup. For example, if team $A$ has a quality of $+15$ and team $B$ has a quality of $+5$, we would expect team $A$ to win by approximately $10$ points.
+
+To compute quality ratings, a GLM with Gaussian family is fitted to regular season game data using the formula:
+
+$$
+\text{Points}_{Diff} \sim -1 + \text{T1} + \text{T2}
+$$
+
+where $\text{Points}_{Diff}$ represents the point difference (team A's score minus team B's score), and $\text{T1}$ and $\text{T2}$ are categorical variables representing the teams. The model includes no intercept ($-1$) because the point differential should be zero when two equally strong teams play. This regression estimates each team's contribution to the point differential, effectively extracting a quality rating for every team.
+
+To ensure the model treats team strength symmetrically regardless of which team is labeled as T1 or T2, each game is duplicated in the dataset with teams swapped. For instance, if team $A$ defeats team $B$ with scores 75-68, the dataset includes both the original game ($T1$=$A$, $T2$=$B$, $\text{Points}_{Diff}$=$+7$) and its swap ($T1$=$B$, $T2$=$A$, $\text{Points}_{Diff}$=$-7$). This redundancy forces the regression to learn that a team's strength is independent of its positional label.
+
+An important preprocessing step adjusts scores for overtime games to normalize all games to the standard 40-minute duration. For a game with $n$ overtime periods, scores are scaled by the factor:
+
+$$
+\text{F}_{adj} = \frac{40}{40 + 5n}
+$$
+
+where each overtime period adds 5 minutes. This normalization ensures that quality ratings reflect per-minute team strength rather than being inflated by extended play.
+
+Quality ratings are computed separately for each season, as team rosters change annually and a team's strength can vary significantly from year to year. Following the approach described by @habib2025, who emphasized the importance of temporal considerations in team strength metrics, our implementation processes each season independently to capture these year-to-year variations in team quality.
+
+Additionally, for the data preparation process described in @sec:sliding-window-averages, quality ratings are recalculated after each game day, including all games in the window size, to ensure that the most recent team strength estimates are used when generating features for upcoming games. This dynamic updating aligns with the temporal nature of sports performance and allows the model to leverage the latest information about team capabilities.
+
+### ELO Delta Sliding Window {#sec:elo-delta-window}
+
+The ELO Delta Sliding Window feature captures the change in a team's ELO rating over a specified window of recent games, providing a measure of recent performance momentum beyond the absolute ELO rating itself. This feature is motivated by the hypothesis that a team's confidence and performance may be influenced not only by their overall strength but also by their recent trajectory and the rate of that trajectory. As shown by @kim2023, the concept of momentum in sports performance and incorporating dynamic changes in team ratings can capture psychological and performance trends that static ratings miss.
+
+For each game, the ELO delta is calculated as:
+
+$$
+\Delta R_w = R_{\text{current}} - R_{w}
+$$
+
+where $R_{\text{current}}$ is the team's ELO rating at the current game and $R_{w}$ is their ELO rating $w$ games prior. A positive delta indicates improving performance, while a negative delta suggests declining performance. Teams with insufficient game history (fewer than $w$ games) are assigned a delta of zero, as there is no meaningful prior reference point.
+
+To determine the optimal window size $w$ and its contribution weight $\omega$, a grid search was conducted to maximize the improvement in Brier score when incorporating the delta adjustment into ELO-based predictions. The adjusted win probability for a matchup between teams $A$ and $B$ is calculated as:
+
+$$
+P(A \text{ beats } B) = \frac{1}{1 + 10^{(R_B + \omega \cdot \Delta R_{B,w} - R_A - \omega \cdot \Delta R_{A,w})/400}}
+$$
+
+where $\omega$ weights the delta adjustment relative to the base ELO ratings. The grid search evaluated various combinations of window sizes and weights, selecting the pair that maximized $\text{Brier}_{\text{raw}} - \text{Brier}_{\text{adjusted}}$, where $\text{Brier}_{\text{raw}}$ represents the Brier score using only base ELO ratings and $\text{Brier}_{\text{adjusted}}$ uses the delta-enhanced predictions.
+
+The optimal configuration was found to be a window size of $w = 3$ games with a weight of $\omega = 0.1$. This indicates that recent performance over the last three games provides meaningful predictive signal, though the effect is modest (weight of 0.1) compared to the base ELO ratings. This aligns with findings from @gomez2024, who discussed how temporal dynamics in rating systems can enhance predictive performance while maintaining interpretability.
+
+The window tracking resets between seasons by default, ensuring that a team's momentum from one season does not inappropriately carry over to the next season when rosters and team compositions have changed. This seasonal reset parallels the ELO regression approach described in @sec:elo-rating and ensures that momentum features reflect current team dynamics rather than stale historical patterns.
+
+### Win Streaks {#sec:win-streaks}
+
+Win and loss streaks represent a team's recent performance momentum, capturing the psychological and performance aspects of consecutive wins or losses that may influence future game outcomes. While the ELO delta feature in @sec:elo-delta-window tracks rating changes, win streaks provide a complementary perspective by focusing on the binary outcome sequence itself, i.e. how many games a team has won or lost in a row, independent of the margin of victory or opponent strength.
+
+The motivation for including win streaks as a feature stems from research on momentum effects in sports, where teams on winning streaks may exhibit increased confidence and cohesion, while teams on losing streaks may suffer from decreased morale or tactical difficulties [@kim2023]. While such psychological effects are difficult to measure directly, the streak feature provides a simple proxy that machine learning models can leverage to capture patterns where recent consecutive outcomes influence future performance beyond what absolute team strength metrics predict.
+
+For each game in the dataset, the win streak feature calculates the team's current streak of consecutive wins (represented as a positive integer) or consecutive losses (represented as a negative integer). A team entering a game on a five-game winning streak would have a streak value of $+5$, while a team that has lost three consecutive games would have a streak value of $-3$. At any point in time, each team has a single streak value that is either positive (wins), negative (losses), or zero (no prior games or at a streak transition point).
+
+The streak calculation processes games in chronological order as also done in @sec:elo-rating. For each game, before updating the streak values with the current game's outcome, the current streaks for both the winning and losing teams are recorded. After recording, the streaks are updated according to the game result:
+
+- Winning team: $\text{streak} := max(1, \text{streak} + 1)$
+- Losing team: $\text{streak} := min(-1, \text{streak} - 1)$
+
+By default, streaks reset between seasons, as team rosters change and performance from the previous season does not meaningfully continue into the new season. This seasonal reset is consistent with the temporal separation applied to other features like ELO ratings and quality metrics, ensuring that features reflect current team dynamics.
 
 ## Dataset Preparation {#sec:dataset-preparation}
 
-### Season Averages {#sec:season-averages}
-87 features (ranked)
-67 data points per gender per season
-2345 total data points (matchups)
+To prepare the dataset for training the machine learning models, three different approaches for aggregating the box-score statistics from @sec:regular-season-detailed-results and the engineered features from @sec:feature-engineering were implemented. These are described in the following sections.
 
+### Season Averages {#sec:season-averages}
+
+![Data loading process for Season Averages](./images/data-loader/season_average.png){#fig:data-loader-season-average width=90%}
+
+This dataset preparation approach is inspired by the winning solution of the 2025 Kaggle competition by @odeh2025marchMLMania. It calculates the average of all box-score statistics and engineered features for each team over each entire regular season. Additionally, it calculates the average of all box-score statistics and engineered features for any team's opponents over the entire regular season. These two sets of calculated averages are then saved for every team containing its averages and its opponents' averages. 
+
+During the data-loading process for training and evaluating the machine learning models, features such as "Points Scored", "Season", "DayNum" and "Team ID" are dropped to prevent data leakage. Finally, end-of-season features such as the eventual ELO rating of a team and the Team Quality are added back, since Team Quality does not have an average and the final ELO before the tournament is the most relevant one for predicting tournament outcomes.
+
+Finally, each matchup in the tournament of a given season, containing the target variable indicating the winner, is constructed by duplicating the matchup once with team A as the first team and team B as the second team and once vice versa. This is done to ensure that the machine learning models treat both teams symmetrically and do not learn any bias based on the order of the teams in the matchup. Lastly, the extracted averages for both teams are merged into the matchup data, resulting in a final dataset ready for training and evaluating the machine learning models.
+
+The final dataset contains the following characteristics:
+
+* 87 features
+* 134 data points per gender per season
+* 4690 total data points
 
 ### Weighted Season Averages {#sec:weighted-season-averages}
-87 features (ranked)
-405’732 total samples (matchups)
 
+![Data loading process for Weighted Season Averages](./images/data-loader/weighted_average.png){#fig:data-loader-weighted-average width=90%}
+
+This dataset preparation approach closely resembles the one described in @sec:season-averages, but instead of calculating simple averages over the entire regular season, weighted averages are calculated where more recent games are weighted more heavily than older games. The discount factor of a given game is calculated as follows:
+
+$$
+\text{F}_{weight} = \gamma^{\text{DayNum}_{max} - \text{DayNum}_{game}}
+$$
+
+where $\gamma$ is the base discount factor (default = 0.99), $\text{DayNum}_{max}$ the maximum day number in the season and $\text{DayNum}_{game}$ the day number of the game to be weighted. This results in games played on the last day of the season having a weight of 1, while games played earlier in the season have exponentially decreasing weights based on how far back they were played.
+
+Additionally to weighting games based on a temporal discount, both regular season and tournament games are added as data points in the final dataset (using the weighted average features of the regular season) and then similar to @sec:season-averages constructed by duplicating each matchup once with team A as the first team and team B as the second team and once vice versa. These constructed matchups are then merged with the calculated weighted season averages for both teams, resulting in a final dataset ready for training and evaluating the machine learning models. This approach significantly increases the number of data points available for training and evaluating the machine learning models.
+
+In hindsight, the question arises whether predicting individual regular season games based on weighted average features of the same regular season has any validity. Surprisingly, as can be seen in @sec:results-weighted-season-averages this approach does seem to have merit.
+
+The final dataset contains the following characteristics:
+
+* 87 features
+* 405’732 total data points
 
 ### Sliding Window Averages {#sec:sliding-window-averages}
-81 features (ranked)
-No seed & streak features
-395’918 total samples (matchups)
 
+![Data loading process for Sliding Window Averages](./images/data-loader/sliding_window.png){#fig:data-loader-sliding-window width=90%}
+
+The final dataset preparation approach builds upon the weighted season averages described in @sec:weighted-season-averages, but instead of calculating weighted averages over the entire regular season, sliding window averages are calculated for every game day in chronological order, sorted by season and day number, including regular season and tournament games. This means that for each game day, the average of all box-score statistics and engineered features over a fixed window size of previous games is calculated. This allows for more dynamic feature values that can adapt to changes in team strength throughout the season.
+
+The window size variable depending on the "DayNum" serving as predictor for the game. In every case, all games preceding the current "DayNum" in the current season are considered. Additionally, all games from the previous season with "DayNum" greater than the current "DayNum" plus the length of the NCAA tournament (22 days) are also considered, ensuring that the tournament games from the previous season are not included in the prediction of tournament games in the current season. With this approach, tournament games are predicted using the same games as in the @sec:season-averages and @sec:weighted-season-averages approaches, increasing comparability of results.
+
+The calculation of the discount factor of a given game is also adapted to the approach in @sec:weighted-season-averages to account for the sliding window and is calculated as follows:
+
+$$
+\text{F}_{weight} = \gamma^{(\text{DayNum}_{game} + \text{Carry if is\_previous\_season else} 0) - \text{DayNum}_{max}}
+$$
+
+where $\gamma$ is the base discount factor (default = 0.98), $\text{DayNum}_{max}$ the maximum day number in the current window, $\text{DayNum}_{game}$ the day number of the game to be weighted, and $\text{Carry} = 40 + 154 = 194$ is a constant composed of the maximum day number of a season (154) plus a buffer (40) additionally downweighing games included from the previous season. $\text{is\_previous\_season}$ is a boolean flag indicating whether a data point is from the previous season.
+
+Finally, similar to @sec:season-averages, target matchup, containing the target variable indicating the winner, is constructed by duplicating the matchup once with team A as the first team and team B as the second team and once vice versa. These constructed matchups are then merged with the calculated sliding window averages for both teams, resulting in a final dataset ready for training and evaluating the machine learning models.
+
+Due to the nature of this approach a certain amount of past games is required to calculate the sliding window averages. Therefore, only games starting from the first tournament in the dataset where enough past games are available are included in the final dataset.
+
+The final dataset contains the following characteristics:
+
+* 81 features (No seed & streak features)
+* 395’918 total data points
+
+## Feature Importance {#sec:feature-importance}
+
+As described in @sec:dataset-preparation, each of the three dataset preparation approaches results in over 80 features for every matchup. To minimize overfitting and improve computational efficiency, all features were ranked based on their importance, allowing for the number of features used for training a given machine learning model to be included as a hyperparameter during model training.
+
+The feature importance ranking was calculated using a XGBoost model [@Chen2016] trained on the respective dataset preparation approach including all features. In total 400 boosting rounds with a maximal depth of 6 and a learning rate of 0.01 were used to ensure that the model learned to use all features. From the split statistics of the trained model, the feature importance ranking was extracted based on the *gain* metric, which measures the improvement in accuracy brought by a feature to the branches it is on. 
+
+For every feature the mean, median and maximum gain scores were extracted and then normalized to the range $[0, 1]$. Eventually, for every feature a score was calculated as follows:
+
+$$
+\text{F}_{Score} = \text{F}_{Count} \cdot (\text{G}_{Mean} + \text{G}_{Median} + \text{G}_{Max})
+$$
+
+where $\text{F}_{Count}$ is the number of times the feature was used in a split, and $\text{G}_{Mean}$, $\text{G}_{Median}$ and $\text{G}_{Max}$ are the normalized mean, median and maximum gain scores respectively. The features were then ranked based on this score in descending order, resulting in a final feature importance ranking for each dataset preparation approach.
+
+To ensure correctness of the feature importance ranking, the process was repeated using a Random Forest model [@Breiman2001] instead of XGBoost. The resulting feature importance rankings were very similar to the ones obtained using XGBoost, confirming the validity of the approach.
+
+### Default Features {#sec:default-features}
+
+To validate the feature importance ranking described in @sec:feature-importance, a default set of features was selected and additional experiments were conducted on these default features. The set of default features consists of the intersection of features used in the winning Kaggle competition solution by @odeh2025marchMLMania and the features available in each data loading approach.
 
 # Methods
-This section describes the various approaches used during the project, starting with statistical approaches to several machine learning methods.
+This section describes the various modelling approaches used during the project, starting with statistical approaches to several machine learning methods.
 
 ## Statistical Approaches {#sec:statistical-approaches}
 To establish a baseline for our machine learning approaches, we implemented several statistical approaches. All of these models were based on the entire compact regular or tourney season results described in @sec:data.
@@ -365,9 +615,9 @@ Machine learning models of the following types were trained during the course of
 XGBoost and CatBoost were implemented using their respective Python libraries [@xgboost-website; @catboost-website], while scikit-learn [@scikit-learn-website] was used for the other models. Each of these models has its own set of hyperparameters that were considered during their respective experiments.
 
 ### Ensemble Training Strategy {#sec:ensemble-training-strategy}
-For these classical machine learning models, an ensemble training approach was implemented where multiple models are trained on different seasons independently, and their predictions are averaged during inference. This temporal ensemble strategy tries to counteract overfitting to a single season.
+For these classical machine learning models, an ensemble training approach was implemented. In this approach, in combination with the data loading approach of @sec:season-averages each season was used once as validation data and a model trained with all other seasons as training data. 
 
-@TODO: @Dave - you'll no better how to elaborate on this
+At inference time, the average of the predictions by the individual model is used as the final prediction. This temporal ensemble strategy tries to counteract overfitting by only using a single season as validation data.
 
 ## Neural Networks
 As a final modelling approach, deep learning techniques were explored. The main idea was that a deep enough neural network (NN) could extract more features from the already existing ones and thus make better predictions than the classical machine learning models (@sec:classical-machine-learning-models), especially on the larger datasets (@sec:dataset-preparation).
@@ -479,7 +729,9 @@ The split into training and validation set depends on the experiment type. @tbl:
 
 ### Ensemble Data Split {#sec:ensemble-data-split}
 
-@TODO: @Dave - implement this
+Similarly to the data split for the Season Averages experiments (@sec:season-averages), all other seasons except one are used as training data and the remaining season as validation data. However, an ensemble of models is trained with every season used as validation data once to train one model.
+
+For example, with seasons 2003-2024 available, one model is trained with seasons 2003-2023 as training data and season 2024 as validation data, another model is trained with seasons 2003-2022 and 2024 as training data and season 2023 as validation data, and so on.
 
 # Results {#sec:results}
 
