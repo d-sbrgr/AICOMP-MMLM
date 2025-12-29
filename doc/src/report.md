@@ -233,13 +233,13 @@ defeat favorites, indicates that current approaches may not fully capture the fa
 The dataset used for this project was obtained from the Kaggle competition "March Machine Learning Mania 2025" [@mmlm2025]. 
 It consists of a total of 36 CSV files containing various information about NCAA Division I basketball games, teams, venues, coaches and tournaments.
 
-## Data Description
+## Data Description {#sec:data-description}
 
 For this project, only a subset of the data available was used. All data used contains historical information up to and including the 2025 regular season. These are described in the following sections.
 
 ### Regular Season Detailed Results {#sec:regular-season-detailed-results}
 
-The regular season detailed results contain basic game information as well as box-score statistics for every NCAA Division I basketball game played in the regular season. For men's basketball the available data start at the 2003 season and for women's basketball at the 2010. @tbl:regular-season-detailed-results describes the features available in this dataset. Features containing \[WL\] in their name are available for both the winning and losing team of a game, e.g. "WTeamID" and "LTeamID" for the winning and losing team IDs respectively.
+The regular season detailed results contain basic game information as well as box-score statistics for every NCAA Division I basketball game played in the regular season. For men's basketball the available data starts with the 2003 season and for women's basketball with the 2010 season. @tbl:regular-season-detailed-results describes the features available in this dataset. Features containing \[WL\] in their name are available for both the winning and losing team of a game, e.g. "WTeamID" and "LTeamID" for the winning and losing team IDs respectively.
 
 | Feature      | Description                              |
 |--------------|------------------------------------------|
@@ -289,7 +289,7 @@ The seed feature additionally contains the conference region of the team as a pr
 
 ## Exploratory Analysis
 
-Initially, all data sources were checked for missing values and inconsistencies, however neither missing values nor obvious wrong values were found.
+Initially, all data sources were checked for missing values and inconsistencies, however neither missing values nor obvious wrong values were found. As mentioned in @sec:data-description, model training was only done on the detailed results datasets from @sec:regular-season-detailed-results and @sec:tournament-detailed-results, spanning from 2003 and 2010 to 2025 respectively. However, for the exploratory data analysis all available regular season data (not including detailed box-score statistics) from 1985 for men and 1998 for women was used to get a better understanding of general patterns in NCAA Division I basketball games over the years.
 
 ![Regular Season Games Overview](./images/pda/MWGamesOverview.png){#fig:regular-season-games-overview width=80%}
 
@@ -312,7 +312,7 @@ After having analyzed total scores in regular season matches, the next step was 
 Score Analysis for both (a) men and (b) women.
 :::
 
-@fig:score-analysis again shows the same analysis for men in the left plot and women in the right plot. The top plots show the distribution of scores for both winning (blue) and losing (red) teams in regular season games (top-left) and tournament games (top-right). For regular season games, the distribution for both genders align closely with a normal distribution, with winning teams having a higher mean score than losing teams, as expected. The distributions for tournament games do not align as closely with a normal distribution, especially for men's losing scores, which show a right-skewed distribution. This could be due to earlier rounds in tournaments where higher-seeded teams play lower-seeded teams, leading to more lopsided scores.
+@fig:score-analysis again shows the same analysis for men in the left plot and women in the right plot. The top plots show the distribution of scores for both winning (blue) and losing (red) teams in regular season games (top-left) and tournament games (top-right). For regular season games, the distribution for both genders align closely with a normal distribution, with winning teams having a higher mean score than losing teams, as expected. For tournament games, also align closely with a normal distribution, but it is less pronounced, likely due to the lower amount of games on record. One minor deviation from the normal distribution is shown in the men's losing scores, which show a slight right-skewed distribution. This could be due to earlier rounds in tournaments where higher-seeded teams play lower-seeded teams, leading to more lopsided scores.
 
 The bottom plots show the distribution of margins of victory (winning score - losing score) for both regular season games (bottom-left) and tournament games (bottom-right). Overall, most games are close games with a margin of victory below 20 points for both regular season and tournament games. However, there are also a significant number of blowout games with margins above 20 points. These blowouts occur more in women's basketball and especially in women's tournament games. This could hint at a higher team-strength gap in women's than men's basketball in general, but also in the teams that clinch a spot for the final tournament.
 
@@ -421,7 +421,7 @@ Additionally, for the data preparation process described in @sec:sliding-window-
 
 ### ELO Delta Sliding Window {#sec:elo-delta-window}
 
-The ELO Delta Sliding Window feature captures the change in a team's ELO rating over a specified window of recent games, providing a measure of recent performance momentum beyond the absolute ELO rating itself. This feature is motivated by the hypothesis that a team's confidence and performance may be influenced not only by their overall strength but also by their recent trajectory and the rate of that trajectory. The concept of momentum in sports performance has been explored in various contexts, and incorporating dynamic changes in team ratings can capture psychological and performance trends that static ratings miss.
+The ELO Delta Sliding Window feature captures the change in a team's ELO rating over a specified window of recent games, providing a measure of recent performance momentum beyond the absolute ELO rating itself. This feature is motivated by the hypothesis that a team's confidence and performance may be influenced not only by their overall strength but also by their recent trajectory and the rate of that trajectory. As shown by @kim2023, the concept of momentum in sports performance and incorporating dynamic changes in team ratings can capture psychological and performance trends that static ratings miss.
 
 For each game, the ELO delta is calculated as:
 
@@ -464,6 +464,8 @@ To prepare the dataset for training the machine learning models, three different
 
 ### Season Averages {#sec:season-averages}
 
+![Data loading process for Season Averages](./images/data-loader/season_average.png){#fig:data-loader-season-average width=90%}
+
 This dataset preparation approach is inspired by the winning solution of the 2025 Kaggle competition by @odeh2025marchMLMania. It calculates the average of all box-score statistics and engineered features for each team over each entire regular season. Additionally, it calculates the average of all box-score statistics and engineered features for any team's opponents over the entire regular season. These two sets of calculated averages are then saved for every team containing its averages and its opponents' averages. 
 
 During the data-loading process for training and evaluating the machine learning models, features such as "Points Scored", "Season", "DayNum" and "Team ID" are dropped to prevent data leakage. Finally, end-of-season features such as the eventual ELO rating of a team and the Team Quality are added back, since Team Quality does not have an average and the final ELO before the tournament is the most relevant one for predicting tournament outcomes.
@@ -477,6 +479,8 @@ The final dataset contains the following characteristics:
 * 4690 total data points
 
 ### Weighted Season Averages {#sec:weighted-season-averages}
+
+![Data loading process for Weighted Season Averages](./images/data-loader/weighted_average.png){#fig:data-loader-weighted-average width=90%}
 
 This dataset preparation approach closely resembles the one described in @sec:season-averages, but instead of calculating simple averages over the entire regular season, weighted averages are calculated where more recent games are weighted more heavily than older games. The discount factor of a given game is calculated as follows:
 
@@ -497,9 +501,11 @@ The final dataset contains the following characteristics:
 
 ### Sliding Window Averages {#sec:sliding-window-averages}
 
+![Data loading process for Sliding Window Averages](./images/data-loader/sliding_window.png){#fig:data-loader-sliding-window width=90%}
+
 The final dataset preparation approach builds upon the weighted season averages described in @sec:weighted-season-averages, but instead of calculating weighted averages over the entire regular season, sliding window averages are calculated for every game day in chronological order, sorted by season and day number, including regular season and tournament games. This means that for each game day, the average of all box-score statistics and engineered features over a fixed window size of previous games is calculated. This allows for more dynamic feature values that can adapt to changes in team strength throughout the season.
 
-The window size variable depending on the "DayNum" serving as predictor for the game. In every case, all games preceding the current "DayNum" in the current season are considered. Additionally, all games from the previous season with "DayNum" greater than the current "DayNum" plus the length of the NCAA tournament (22 days) are also considered. This ensures that the tournament games from the previous season are not included in the prediction of tournament games in the current season.
+The window size variable depending on the "DayNum" serving as predictor for the game. In every case, all games preceding the current "DayNum" in the current season are considered. Additionally, all games from the previous season with "DayNum" greater than the current "DayNum" plus the length of the NCAA tournament (22 days) are also considered, ensuring that the tournament games from the previous season are not included in the prediction of tournament games in the current season. With this approach, tournament games are predicted using the same games as in the @sec:season-averages and @sec:weighted-season-averages approaches, increasing comparability of results.
 
 The calculation of the discount factor of a given game is also adapted to the approach in @sec:weighted-season-averages to account for the sliding window and is calculated as follows:
 
@@ -522,7 +528,7 @@ The final dataset contains the following characteristics:
 
 As described in @sec:dataset-preparation, each of the three dataset preparation approaches results in over 80 features for every matchup. To minimize overfitting and improve computational efficiency, all features were ranked based on their importance, allowing for the number of features used for training a given machine learning model to be included as a hyperparameter during model training.
 
-The feature importance ranking was calculated using a XGBoost model [@Chen2016] trained on the respective dataset preparation approach including all features. In total 400 boosting rounds with a maximal depth of 6 and a learning rate of 0.01 were used to ensure that the model learned to use all features. From the split statistics of the trained model, the feature importance ranking was extracted based on the gain metric, which measures the improvement in accuracy brought by a feature to the branches it is on. 
+The feature importance ranking was calculated using a XGBoost model [@Chen2016] trained on the respective dataset preparation approach including all features. In total 400 boosting rounds with a maximal depth of 6 and a learning rate of 0.01 were used to ensure that the model learned to use all features. From the split statistics of the trained model, the feature importance ranking was extracted based on the *gain* metric, which measures the improvement in accuracy brought by a feature to the branches it is on. 
 
 For every feature the mean, median and maximum gain scores were extracted and then normalized to the range $[0, 1]$. Eventually, for every feature a score was calculated as follows:
 
@@ -531,6 +537,8 @@ $$
 $$
 
 where $\text{F}_{Count}$ is the number of times the feature was used in a split, and $\text{G}_{Mean}$, $\text{G}_{Median}$ and $\text{G}_{Max}$ are the normalized mean, median and maximum gain scores respectively. The features were then ranked based on this score in descending order, resulting in a final feature importance ranking for each dataset preparation approach.
+
+To ensure correctness of the feature importance ranking, the process was repeated using a Random Forest model [@Breiman2001] instead of XGBoost. The resulting feature importance rankings were very similar to the ones obtained using XGBoost, confirming the validity of the approach.
 
 ### Default Features {#sec:default-features}
 
