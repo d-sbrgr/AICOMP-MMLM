@@ -74,7 +74,7 @@ fetch_kaggle_results:
 
 build_report:
   stage: build
-  image: cr.gitlab.switch.ch/hslu/edu/bachelor-computer-science/aicomp/student-repositories/hs25/march-machine-learning-mania-2025-basketball-tournaments/code
+  image: cr.gitlab.switch.ch/hslu/edu/bachelor-computer-science/aicomp/student-repositories/hs25/march-machine-learning-mania-2025-basketball-tournaments/code:latest
   before_script:
     - cd doc
     - mkdir _build
