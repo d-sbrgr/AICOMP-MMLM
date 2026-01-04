@@ -841,58 +841,45 @@ CatBoost achieved the best test score of 0.1171 (rank 245) and lowest training s
 
 XGBoost achieved the best test score of 0.1168 (rank 238), representing the best performance across all experiments conducted. Neural Network - BCE obtained 0.1171 on test (rank 245), matching the top scores from @tbl:results-season-averages-ensembles-default-features and @tbl:results-weighted-season-averages. Random Forest showed the lowest training score of 0.1650 but achieved 0.1228 on test (rank 386). Neural Network - BCE + Entropy demonstrated the highest training and validation scores of 0.2215 and 0.2221 respectively, with a test score of 0.1230 (rank 393). All models except Neural Network - BCE + Entropy showed closely clustered validation scores between 0.1771 and 0.1785. Compared to Season Averages models in @tbl:results-season-averages, XGBoost improved from 0.1234 to 0.1168, demonstrating the value of sliding window features over season-averaged statistics. The XGBoost model's rank of 238 represents the highest achieved ranking among all experiments, beating the best models of both ensemble methods and weighted averaging strategies.
 
+
+## Neural Network Accuracy {#sec:results-neural-network-accuracy}
+
+In @tbl:results-neural-network-accuracy, the accuracy of the neural network models across different data preparation methods is presented. The highest accuracy of 77.5% was achieved by the Neural Network - BCE model using Weighted Season Averages, which also had the lowest Brier score of 0.1513. The accuracy of the best Neural Network model on the test data (Sliding Window Averages with BCE loss) was 72.6%, corresponding to a Brier score of 0.1771. This discrepancy between the highest accuracy and best model performance stems from the fact that the test data is not available and therefore accuracy cannot be calculated on it directly. Instead, both accuracy and Brier score displayed in the table are calculated on the validation set.
+
+| Model                             |     Data Preparation     | Brier Score | Accuracy [%] |
+|-----------------------------------|:------------------------:|:-----------:|:------------:|
+| Neural Network                    |     Season Averages      |   0.1526    |     76.1     |
+| Neural Network - Default Features |     Season Averages      |   0.1538    |     75.7     |
+| Neural Network - BCE              |     Season Averages      |   0.1561    |     75.3     |
+| Neural Network - BCE + Entropy    |     Season Averages      |   0.1551    |     77.2     |
+| Neural Network                    | Weighted Season Averages |   0.1526    |     77.2     |
+| Neural Network - Default Features | Weighted Season Averages |   0.1530    |     77.3     |
+| Neural Network - BCE              | Weighted Season Averages | **0.1513**  |   **77.5**   |
+| Neural Network - BCE + Entropy    | Weighted Season Averages |   0.1855    |     77.1     |
+| Neural Network                    | Sliding Window Averages  |   0.1772    |     72.7     |
+| Neural Network - Default Features | Sliding Window Averages  |   0.1784    |     72.5     |
+| Neural Network - BCE              | Sliding Window Averages  |  *0.1771*   |    *72.6*    |
+| Neural Network - BCE + Entropy    | Sliding Window Averages  |   0.2221    |     72.3     |
+
+: Neural Network Accuracy Results {#tbl:results-neural-network-accuracy}
+
 \newpage
 
 # Discussion {#sec:discussion}
 
-Throughout the presentation of our results in @sec:results, it becomes apparent that the combination of data preparation strategies 
-and model architecture selection has significant influence on predictive performance in the context of NCAA tournament outcome prediction, while model complexity itself 
-is almost negligible, supporting @kim2023's finding of narrow performance ranges (61-67% accuracy) across different architectures. 
-Our best performing model, a combination of XGBoost architecture and Sliding Window Averages (@tbl:results-sliding-window-averages), 
-achieved a Brier score of 0.1168 (rank 238), which outperformed all instances of more complex neural network architectures (best NN-BCE at 0.1171, rank 245). 
-This contradicts the common assumption that increasingly sophisticated models yield proportionally better predictions, 
-instead supporting @lopez2015's conclusion that "modest statistical methods with informative data can meet or exceed the accuracy of more complex models."
+Throughout the presentation of our results in @sec:results, it becomes apparent that the combination of data preparation strategies and model architecture selection has significant influence on predictive performance in the context of NCAA tournament outcome prediction, while model complexity itself is almost negligible, supporting @kim2023's finding of narrow performance ranges (61-67% accuracy) across different architectures. Our best performing model, a combination of XGBoost architecture and Sliding Window Averages (@tbl:results-sliding-window-averages), achieved a Brier score of 0.1168 (rank 238), which outperformed all instances of more complex neural network architectures (best NN-BCE at 0.1171, rank 245). This contradicts the common assumption that increasingly sophisticated models yield proportionally better predictions, instead supporting @lopez2015's conclusion that "modest statistical methods with informative data can meet or exceed the accuracy of more complex models."
 
-The impact of different data loading approaches emerges as the most significant factor in our experiments. Our Sliding Window Averages method consistently 
-outperformed both Weighed Season Averages and Season Averages, which was inspired by the Kaggle competition winning solution by @odeh2025marchMLMania. 
-XGBoost improved from 0.1234 (Season Averages) to 0.1168 
-(Sliding Window), and Neural Network-BCE from 0.1189 to 0.1171, demonstrating that the expansion of the underlying training and test data by a factor of around 400 
-and data aggregation taking temporal dynamics into account increases predictive accuracy, suggesting that our approach 
-captures performance dynamics that season-wide averaging obscures. This finding aligns with @gomez2024's emphasis on temporal 
-dynamics in rating systems, though our implementation also included sliding window averages over raw box-score statistics rather 
-than rating updates alone. 
+The impact of different data loading approaches emerges as the most significant factor in our experiments. Our Sliding Window Averages method consistently outperformed both Weighed Season Averages and Season Averages, which was inspired by the Kaggle competition winning solution by @odeh2025marchMLMania. XGBoost improved from 0.1234 (Season Averages) to 0.1168 (Sliding Window), and Neural Network-BCE from 0.1189 to 0.1171, demonstrating that the expansion of the underlying training and test data by a factor of around 400 and data aggregation taking temporal dynamics into account increases predictive accuracy, suggesting that our approach captures performance dynamics that season-wide averaging obscures. This finding aligns with @gomez2024's emphasis on temporal dynamics in rating systems, though our implementation also included sliding window averages over raw box-score statistics rather than rating updates alone. 
 
-Surprisingly, the Weighted Season Averages approach, which used to same aggregated features to predict both regular season and 
-tournament games for a given season, achieved competitive results despite the questionable validity of predicting past regular 
-season games using features partially derived from games later in the same season. Further investigation is needed to understand why this data leakage did not 
-impair performance, potentially indicating that the models effectively ignored temporally inconsistent features.
+Surprisingly, the Weighted Season Averages approach, which used to same aggregated features to predict both regular season and tournament games for a given season, achieved competitive results despite the questionable validity of predicting past regular season games using features partially derived from games later in the same season. Further investigation is needed to understand why this data leakage did not impair performance, potentially indicating that the models effectively ignored temporally inconsistent features.
 
-Counter to expectations established by @yuan2015's mixture-of-modelers success and @habib2025's ensemble approaches, our 
-ensemble strategy (@sec:ensemble-training-strategy) produced mixed results; though our ensembles were limited to using multiple instances 
-of the same model type trained on different seasons, rather than combining diverse architectures. 
-While XGBoost and CatBoost models showed improvements in ensemble configuration over their individual counterparts (0.1213 vs. 0.1234 and 0.1208 vs. 0.1427 respectively), 
-all other models declined in performance. Across all ensemble models, however, the variance between validation and test scores was lower compared to 
-individual models, suggesting improved generalization capacity. However, this enhanced stability did not translate to superior leaderboard performance, 
-indicating that the prediction of tournament outcomes may reward riskier individual models over conservative, but more stable ensemble predictions.
+Counter to expectations established by @yuan2015's mixture-of-modelers success and @habib2025's ensemble approaches, our ensemble strategy (@sec:ensemble-training-strategy) produced mixed results; though our ensembles were limited to using multiple instances of the same model type trained on different seasons, rather than combining diverse architectures. While XGBoost and CatBoost models showed improvements in ensemble configuration over their individual counterparts (0.1213 vs. 0.1234 and 0.1208 vs. 0.1427 respectively), all other models declined in performance. Across all ensemble models, however, the variance between validation and test scores was lower compared to individual models, suggesting improved generalization capacity. However, this enhanced stability did not translate to superior leaderboard performance, indicating that the prediction of tournament outcomes may reward riskier individual models over conservative, but more stable ensemble predictions.
 
-Our results reveal an apparent performance ceiling across all approaches, with validation Brier scores consistently stagnating around 
-0.15 and test Brier scores around 0.12 regardless of model choice and only differing slightly due to the data preparation method chosen. 
-Even our best model (Brier score 0.1168) is clearly outperformed by 
-the competition's top scores (1st place Brier score of 0.1041 [@odeh2025marchMLMania]), suggesting fundamental limits to tournament predictability using team-level aggregated statistics. 
-This ceiling may reflect the "inherent unpredictability of tournament play" that motivates @mciver2025's documentation of zero perfect brackets in history.
+Our results reveal an apparent performance ceiling across all approaches, with validation Brier scores consistently stagnating around 0.15 and test Brier scores around 0.12 regardless of model choice and only differing slightly due to the data preparation method chosen. Even our best model (Brier score 0.1168) is clearly outperformed by the competition's top scores (1st place Brier score of 0.1041 [@odeh2025marchMLMania]), suggesting fundamental limits to tournament predictability using team-level aggregated statistics. This ceiling may reflect the "inherent unpredictability of tournament play" that motivates @mciver2025's documentation of zero perfect brackets in history.
 
-Feature engineering proved critically important, consistent with @habib2025's emphasis on sophisticated feature construction. 
-The default features experiments, using an intersection of features from the winning solution and our data preparation approaches, 
-generally achieved comparable or superior performance to ranked features from sec:feature-importance, particularly evident in the ensemble experiments 
-where Random Forest with default features achieved 0.1171 versus 0.1232 with ranked features (@tbl:results-season-averages-ensembles-default-features). 
-This suggests that domain-informed feature selection may be more effective than data-driven feature ranking.
+Feature engineering proved critically important, consistent with @habib2025's emphasis on sophisticated feature construction. The default features experiments, using an intersection of features from the winning solution and our data preparation approaches, generally achieved comparable or superior performance to ranked features from sec:feature-importance, particularly evident in the ensemble experiments where Random Forest with default features achieved 0.1171 versus 0.1232 with ranked features (@tbl:results-season-averages-ensembles-default-features). This suggests that domain-informed feature selection may be more effective than data-driven feature ranking.
 
-A significant limitation of our approach lies in the direct comparison with the Kaggle leaderboard. Unlike top-performing solutions that 
-manually adjusted predictions based on tournament structure or betting market information, we maintained a purely data-driven approach without post-processing. 
-Our custom BCE with entropy penalty loss function (@sec:loss-functions), designed to encourage confident predictions similar to manual post-processing, 
-failed to improve performance (0.1221 test score), demonstrating that algorithmic attempts to replicate these manual adjustments cannot substitute for genuine domain expertise. 
-This "scientifically pure" approach, while methodologically rigorous, may have handicapped our competitive performance relative to pragmatic solutions 
-that leverage additional information sources.
+A significant limitation of our approach lies in the direct comparison with the Kaggle leaderboard. Unlike top-performing solutions that manually adjusted predictions based on tournament structure or betting market information, we maintained a purely data-driven approach without post-processing. Our custom BCE with entropy penalty loss function (@sec:loss-functions), designed to encourage confident predictions similar to manual post-processing, failed to improve performance (0.1221 test score), demonstrating that algorithmic attempts to replicate these manual adjustments cannot substitute for genuine domain expertise. This "scientifically pure" approach, while methodologically rigorous, may have handicapped our competitive performance relative to pragmatic solutions that leverage additional information sources.
 
 # Conclusion {#sec:conclusion}
 @TODO
