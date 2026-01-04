@@ -888,22 +888,22 @@ One potential drawback of the approaches explored in this project is how the dat
 Another aspect that could be explored is different sources of data. One specific example would be to base predictions on the performance of individual players within each team, rather than on the team overall.
 
 ## Lessons Learned
-This project was overall a very good opportunity to apply what we have learned at the university so far. As opposed to previous projects, we finally had some knowledge in most of the important parts of an AI/ML project (like machine learning methods, experiment tracking, AI/ML project workflow) when initiating the project, which made it possible to focus more on the project without needing to learn new tools.
+Overall, this project was a very good opportunity to apply the knowledge we acquired at the university so far. In contrast to previous projects, we had the necessary knowledge in most of the important parts of an AI/ML project (like machine learning methods, experiment tracking, AI/ML project workflow) at the start of the project, allowing for a shift in focus on different methods, their advantages and drawbacks, without having to learn new tools first.
 
-Thanks to this we were able to experiment with more models than we were used to. This forced us to come up with a solution to run the quite substantial count of experiments and track their results in a unified and comparable way.
+Due to this we were able to experiment with more different models than we were used to. This forced us to spend more time on software engineering, to let us run the quite substantial count of experiments, track their results in a unified and comparable way and iterate this process in search for better results.
 
-Another insight, that we had heard of many times already, but was now confirmed, is that increasing the model complexity and size does not necessarily lead to better performance. Even simple models, like logistic regression, were able to compete with models like XGBoost or deep neural networks as our results have shown.
+Another insight we had heard of many times already but was now confirmed, is that increasing model complexity and data size does not necessarily lead to better performance. Even simple models, like logistic regression, were able to compete with models like XGBoost or deep neural networks as our results have shown.
 
-In a similary way we noticed, that it was rather easy to achieve respectable results, with these simpler models and data loading approaches. However once we had achieved those results, it turned out to be very difficult to improve them. We tried new and more complex machine learning models and data preparation approaches, yet were only able to improve performance marginally. This reminded us of the Pareto principle (80/20 rule).
+Similarly, we noticed that achieving initial, respectable results is quite easy, also with simple models and data loading approaches. However, improving upon these initial results turned out to be a challenge. We tried more recent and more complex machine learning models and increasingly complex data preparation approaches, yet were only able to improve on the initial performance marginally. This reminded us of the Pareto principle (80/20 rule).
 
-This project has shown once more, how important a preliminary data analysis is. Understanding the data your working with is essential to find and engineer important features, and to understand the results and limitations of your work.
+Once again, we were reminded of the importance of preliminary data analysis, where a crucial understanding for the data we work with is developed. From there the engineering of insight- and meaningful features carries the entire project, as we clearly saw in this project. While analysing the data is important at the start of a project, it can be just as important to help understand the results and limitations of your work.
 
-We've also seen, that data quality and well engineered features contribute a lot more to the success of such a project, than sheer data quantity. The results of our larger datasets did not improve the performance by a lot.
+We've also seen, that data quality and well engineered features contribute a lot more to the success of such a project, than sheer data quantity. While the results of our larger datasets did improve the performance, is was only marginal.
 
 \newpage
 
 # Acknowledgements
-This project was implemented with the help of AI tools; GitHub Copilot (with Claude Sonnet 4.5), DeepL. They were applied for the following purposes:
+This project was implemented with the help of AI tools (GitHub Copilot with Claude Sonnet 4.5 & DeepL). They were applied for the following purposes:
 - Support with the implementation of the logic
 - Translation for documentation of presentation
 - Rephrasing, paraphrasing and spell/grammar checks for parts of the report
