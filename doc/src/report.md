@@ -854,18 +854,18 @@ This contradicts the common assumption that increasingly sophisticated models yi
 instead supporting @lopez2015's conclusion that "modest statistical methods with informative data can meet or exceed the accuracy of more complex models."
 
 The impact of different data loading approaches emerges as the most significant factor in our experiments. Our Sliding Window Averages method consistently 
-outperformed both Weighed Season Averages and Season Averaged, which was inspired by the Kaggle competition winning solution by @odeh2025marchMLMania. 
+outperformed both Weighed Season Averages and Season Averages, which was inspired by the Kaggle competition winning solution by @odeh2025marchMLMania. 
 XGBoost improved from 0.1234 (Season Averages) to 0.1168 
 (Sliding Window), and Neural Network-BCE from 0.1189 to 0.1171, demonstrating that the expansion of the underlying training and test data by a factor of around 400 
 and data aggregation taking temporal dynamics into account increases predictive accuracy, suggesting that our approach 
 captures performance dynamics that season-wide averaging obscures. This finding aligns with @gomez2024's emphasis on temporal 
-dynamics in rating systems, though our implementation also sliding windows over raw box-score statistics rather 
+dynamics in rating systems, though our implementation also included sliding window averages over raw box-score statistics rather 
 than rating updates alone. 
 
 Surprisingly, the Weighted Season Averages approach, which used to same aggregated features to predict both regular season and 
 tournament games for a given season, achieved competitive results despite the questionable validity of predicting past regular 
-season games using features partially derived from games later in the same season. Further investigation is needed to understand why this data leakage did not
-severely impair performance, potentially indicating that the models effectively ignored temporally inconsistent features.
+season games using features partially derived from games later in the same season. Further investigation is needed to understand why this data leakage did not 
+impair performance, potentially indicating that the models effectively ignored temporally inconsistent features.
 
 Counter to expectations established by @yuan2015's mixture-of-modelers success and @habib2025's ensemble approaches, our 
 ensemble strategy (@sec:ensemble-training-strategy) produced mixed results; though our ensembles were limited to using multiple instances 
@@ -877,8 +877,8 @@ indicating that the prediction of tournament outcomes may reward riskier individ
 
 Our results reveal an apparent performance ceiling across all approaches, with validation Brier scores consistently stagnating around 
 0.15 and test Brier scores around 0.12 regardless of model choice and only differing slightly due to the data preparation method chosen. 
-Even our best model (Brier score 0.1168) substantially exceeds 
-the competition's top scores (1st place Brier score of 0.1041), suggesting fundamental limits to tournament predictability using team-level aggregated statistics. 
+Even our best model (Brier score 0.1168) is clearly outperformed by 
+the competition's top scores (1st place Brier score of 0.1041 [@odeh2025marchMLMania]), suggesting fundamental limits to tournament predictability using team-level aggregated statistics. 
 This ceiling may reflect the "inherent unpredictability of tournament play" that motivates @mciver2025's documentation of zero perfect brackets in history.
 
 Feature engineering proved critically important, consistent with @habib2025's emphasis on sophisticated feature construction. 
@@ -890,7 +890,7 @@ This suggests that domain-informed feature selection may be more effective than 
 A significant limitation of our approach lies in the direct comparison with the Kaggle leaderboard. Unlike top-performing solutions that 
 manually adjusted predictions based on tournament structure or betting market information, we maintained a purely data-driven approach without post-processing. 
 Our custom BCE with entropy penalty loss function (@sec:loss-functions), designed to encourage confident predictions similar to manual post-processing, 
-failed to improve performance (0.1221 test score), demonstrating that algorithmic attempts to replicate manual adjustments cannot substitute for genuine domain expertise. 
+failed to improve performance (0.1221 test score), demonstrating that algorithmic attempts to replicate these manual adjustments cannot substitute for genuine domain expertise. 
 This "scientifically pure" approach, while methodologically rigorous, may have handicapped our competitive performance relative to pragmatic solutions 
 that leverage additional information sources.
 
