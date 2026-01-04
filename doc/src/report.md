@@ -919,7 +919,7 @@ One potential drawback of the approaches explored in this project is how the dat
 
 Another aspect that could be explored is different sources of data. One specific example would be to base predictions on the performance of individual players within each team, rather than on the team overall.
 
-## Lessons Learned
+## Lessons Learned & Reflection
 Overall, this project was a very good opportunity to apply the knowledge we acquired at the university so far. In contrast to previous projects, we had the necessary knowledge in most of the important parts of an AI/ML project (like machine learning methods, experiment tracking, AI/ML project workflow) at the start of the project, allowing for a shift in focus on different methods, their advantages and drawbacks, without having to learn new tools first.
 
 Due to this we were able to experiment with more different models than we were used to. This forced us to spend more time on software engineering, to let us run the quite substantial count of experiments, track their results in a unified and comparable way and iterate this process in search for better results.
@@ -931,6 +931,8 @@ Similarly, we noticed that achieving initial, respectable results is quite easy,
 Once again, we were reminded of the importance of preliminary data analysis, where a crucial understanding for the data we work with is developed. From there the engineering of insight- and meaningful features carries the entire project, as we clearly saw in this project. While analysing the data is important at the start of a project, it can be just as important to help understand the results and limitations of your work.
 
 We've also seen, that data quality and well engineered features contribute a lot more to the success of such a project, than sheer data quantity. While the results of our larger datasets did improve the performance, is was only marginal.
+
+Concluding this section with a more personal note, we both enjoyed the team work on this project. Apart from discussing on eye-level which lead to progress in the project and mutual learning, we were able to distribute tasks according to our strengths and preferences, which lead to an efficient workflow. Thanks to frequent and open communication we were able to avoid misunderstandings and set clear expectations of our project tasks and goals. All of this contributed to a focused, yet enjoyable working experience.
 
 \newpage
 
