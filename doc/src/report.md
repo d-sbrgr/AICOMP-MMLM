@@ -39,6 +39,8 @@ predicted probabilities and binary outcomes. The competition started on February
 one month to develop and refine their models. Also, the competition includes a prize money pool of $50,000 attracting 1,727 teams that 
 are listed on the competition's leaderboard.
 
+\newpage
+
 # Existing Research
 
 The prediction of NCAA Division I basketball tournament outcomes represents a compelling intersection of sports
@@ -227,6 +229,8 @@ small sample statistical noise. The data contamination issue highlighted by @yua
 performance may overstate true predictive capability when researchers inadvertently include post-tournament information.
 The persistent difficulty in predicting upsets, particularly in early rounds where lower-seeded teams occasionally
 defeat favorites, indicates that current approaches may not fully capture the factors driving individual game variance.
+
+\newpage
 
 # Data {#sec:data}
 
@@ -544,6 +548,8 @@ To ensure correctness of the feature importance ranking, the process was repeate
 
 To validate the feature importance ranking described in @sec:feature-importance, a default set of features was selected and additional experiments were conducted on these default features. The set of default features consists of the intersection of features used in the winning Kaggle competition solution by @odeh2025marchMLMania and the features available in each data loading approach.
 
+\newpage
+
 # Methods
 This section describes the various modelling approaches used during the project, starting with statistical approaches to several machine learning methods.
 
@@ -677,6 +683,8 @@ With the architecture as hyperparameter approach the training could be defined b
 
 The training procedure includes early stopping based on the validation loss, as well as model checkpointing. The progress of the training was tracked using Weights & Biases [@wandb], which ultimately served as the tool to select the best model out of multiple training runs.
  
+\newpage
+
 # Experiments {#sec:experiments}
 The experiments conducted can be divided into the experiments with the statistical approaches and the experiments with the machine learning approaches. The statistical approaches were run on their respective subset of data as described in @sec:statistical-approaches. For the machine learning approaches, experiments were conducted for each model type (@sec:classical-machine-learning-models, @sec:neural-network-architecture) and each dataset (@sec:dataset-preparation), with a few exceptions. Additionally, ensemble experiments were conducted for each classical model type (@sec:ensemble-training-strategy).
 
@@ -732,6 +740,8 @@ The split into training and validation set depends on the experiment type. @tbl:
 Similarly to the data split for the Season Averages experiments (@sec:season-averages), all other seasons except one are used as training data and the remaining season as validation data. However, an ensemble of models is trained with every season used as validation data once to train one model.
 
 For example, with seasons 2003-2024 available, one model is trained with seasons 2003-2023 as training data and season 2024 as validation data, another model is trained with seasons 2003-2022 and 2024 as training data and season 2023 as validation data, and so on.
+
+\newpage
 
 # Results {#sec:results}
 
@@ -841,6 +851,8 @@ CatBoost achieved the best test score of 0.1171 (rank 245) and lowest training s
 
 XGBoost achieved the best test score of 0.1168 (rank 238), representing the best performance across all experiments conducted. Neural Network - BCE obtained 0.1171 on test (rank 245), matching the top scores from @tbl:results-season-averages-ensembles-default-features and @tbl:results-weighted-season-averages. Random Forest showed the lowest training score of 0.1650 but achieved 0.1228 on test (rank 386). Neural Network - BCE + Entropy demonstrated the highest training and validation scores of 0.2215 and 0.2221 respectively, with a test score of 0.1230 (rank 393). All models except Neural Network - BCE + Entropy showed closely clustered validation scores between 0.1771 and 0.1785. Compared to Season Averages models in @tbl:results-season-averages, XGBoost improved from 0.1234 to 0.1168, demonstrating the value of sliding window features over season-averaged statistics. The XGBoost model's rank of 238 represents the highest achieved ranking among all experiments, beating the best models of both ensemble methods and weighted averaging strategies.
 
+\newpage
+
 # Discussion {#sec:discussion}
 @TODO
 
@@ -861,6 +873,8 @@ XGBoost achieved the best test score of 0.1168 (rank 238), representing the best
 
 
 
+
+\newpage
 
 # Conclusion {#sec:conclusion}
 @TODO
