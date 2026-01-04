@@ -899,7 +899,9 @@ Another aspect that could be explored is different sources of data. One specific
 \newpage
 
 # Acknowledgements
-
-We acknowledge the use of artificial intelligence tools, specifically GitHub Copilot and ChatGPT, throughout various stages of this project. These AI assistants were employed to support code development, debugging, documentation writing, and brainstorming of methodological approaches. All AI-generated content was critically reviewed, verified, and adapted by the authors to ensure accuracy and alignment with project objectives.
+This project was implemented with the help of AI tools; GitHub Copilot (with Claude Sonnet 4.5), DeepL. They were applied for the following purposes:
+- Support with the implementation of the logic
+- Translation for documentation of presentation
+- Rephrasing, paraphrasing and spell/grammar checks for parts of the report
 
 # References {-}
