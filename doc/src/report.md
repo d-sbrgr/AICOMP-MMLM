@@ -844,8 +844,31 @@ XGBoost achieved the best test score of 0.1168 (rank 238), representing the best
 # Discussion {#sec:discussion}
 @TODO
 
+- Data loader approaches - different ones (from the winning solution) can lead to better performance
+- Model does not make a huge difference in results (habib)
+- Data scarcity/research gaps - new idea to improve available data
+- Ensemble models (of same model type) don't necessarily yield better results with concurrent methods
+- Simple statistical models don't perform very well, also seen in existing research
+- Equal data loader - models have similar validation scores, but test scores vary more between the models
+    - Ensemble models show lower variance between validation and test score
+    - Could point to better generalization but not to win competition
+- Hard threshold at a certain Brier Score for each dataset, validation: 0.15, test at 0.12
+    - Stagnates there
+- Engineered features were important (habib)
+- Direct comparison with the leaderboard is difficult because we did not manually change our model's predictions.
+    - A vain approach of a more scientific idea with a custom loss function
+
+
+
+
+
 # Conclusion {#sec:conclusion}
 @TODO
+
+- There is a certain unpredictability in sport
+- Upset rate aligns with model accuracy
+- We addressed several gaps in existing research and compared approaches across different methodologies (see paragraph below)
+- Performance depends more on data preparation than on model (complexity). Can achieve similar performance with simple models.
 
 Taken from Existing Research, but think rephrased would fit better here:
 
@@ -859,7 +882,7 @@ Taken from Existing Research, but think rephrased would fit better here:
 > men's and women's tournaments enables investigation of whether predictive patterns and optimal methodologies generalize
 > across these related but distinct competitive environments.
 
-## Possible Future Work
+## Future Work
 One potential drawback of the approaches explored in this project is how the data was prepared and fed to the models. Each approach included an aggregation of the available data, which comes with a loss of information. For future work, we propose using the data without direct aggregation, instead considering the time series aspect by predicting matchup outcomes based on $n$ or all previous matchups. One approach would be to concatenate the statistics of the past $n$ games of each team in the matchup and use this as the input vector (for example, to a deep neural network) to predict the win probability of the current game. Another approach might be to feed the entire statistics of $n$ past games from each team to a recurrent neural network as samples at separate time steps and train a classification head on the latent representation of each team's series.
 
 Another aspect that could be explored is different sources of data. One specific example would be to base predictions on the performance of individual players within each team, rather than on the team overall.
@@ -867,6 +890,16 @@ Another aspect that could be explored is different sources of data. One specific
 ## Lessons Learned
 @TODO
 
+- First project with such a big array of models
+- Important to make a proper analysis of the data
+- Achieving respectably good results was easy - improving them further difficult (80/20)
+- Complexity/Larger models doesn't necessarily improve performance
+- Clean data is more important than a lot of data
+
 \newpage
+
+# Acknowledgements
+
+We acknowledge the use of artificial intelligence tools, specifically GitHub Copilot and ChatGPT, throughout various stages of this project. These AI assistants were employed to support code development, debugging, documentation writing, and brainstorming of methodological approaches. All AI-generated content was critically reviewed, verified, and adapted by the authors to ensure accuracy and alignment with project objectives.
 
 # References {-}
