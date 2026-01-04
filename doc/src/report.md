@@ -887,8 +887,19 @@ One potential drawback of the approaches explored in this project is how the dat
 
 Another aspect that could be explored is different sources of data. One specific example would be to base predictions on the performance of individual players within each team, rather than on the team overall.
 
-## Lessons Learned
-@TODO
+## Lessons Learnt
+This project was overall a very good opportunity, to apply what we have learnt at the university so far. As opposed to previous projects, we finally had some knowledge in most of the important parts of an AI/ML project  (like, machine learning methods, experiment tracking, AI/ML project workflow) when initiating the project, which made it possible, to focus more on the project, without needing to learn new tools.
+Thanks to this we were able to experiment with more models than we were used to. This forced us to come up with a solution to run the quite substantial count of experiments and track their results in a unified and comparable way.
+Another insight, that we had heard of many times already, but now was confirmed, is that increasing the model complexity and size does not necessarily lead to better performance. Even simple models, like logistic regression, were able to compete with models like XGBoost, as our results have shown.
+
+
+- Overall good learning experience
+- First project with pretty solid ML knowledge before project begin
+- Compared to other projects, many different models
+- Complexity not necessarily better
+- Proper data analysis
+- Clean data, good features > much data
+- OK results - soon, better results - difficult
 
 - First project with such a big array of models
 - Important to make a proper analysis of the data
