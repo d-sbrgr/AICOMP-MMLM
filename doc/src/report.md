@@ -920,18 +920,24 @@ One potential drawback of the approaches explored in this project is how the dat
 Another aspect that could be explored is different sources of data. One specific example would be to base predictions on the performance of individual players within each team, rather than on the team overall.
 
 ## Lessons Learned
-@TODO
+Overall, this project was a very good opportunity to apply the knowledge we acquired at the university so far. In contrast to previous projects, we had the necessary knowledge in most of the important parts of an AI/ML project (like machine learning methods, experiment tracking, AI/ML project workflow) at the start of the project, allowing for a shift in focus on different methods, their advantages and drawbacks, without having to learn new tools first.
 
-- First project with such a big array of models
-- Important to make a proper analysis of the data
-- Achieving respectably good results was easy - improving them further difficult (80/20)
-- Complexity/Larger models doesn't necessarily improve performance
-- Clean data is more important than a lot of data
+Due to this we were able to experiment with more different models than we were used to. This forced us to spend more time on software engineering, to let us run the quite substantial count of experiments, track their results in a unified and comparable way and iterate this process in search for better results.
+
+Another insight we had heard of many times already but was now confirmed, is that increasing model complexity and data size does not necessarily lead to better performance. Even simple models, like logistic regression, were able to compete with models like XGBoost or deep neural networks as our results have shown.
+
+Similarly, we noticed that achieving initial, respectable results is quite easy, also with simple models and data loading approaches. However, improving upon these initial results turned out to be a challenge. We tried more recent and more complex machine learning models and increasingly complex data preparation approaches, yet were only able to improve on the initial performance marginally. This reminded us of the Pareto principle (80/20 rule).
+
+Once again, we were reminded of the importance of preliminary data analysis, where a crucial understanding for the data we work with is developed. From there the engineering of insight- and meaningful features carries the entire project, as we clearly saw in this project. While analysing the data is important at the start of a project, it can be just as important to help understand the results and limitations of your work.
+
+We've also seen, that data quality and well engineered features contribute a lot more to the success of such a project, than sheer data quantity. While the results of our larger datasets did improve the performance, is was only marginal.
 
 \newpage
 
 # Acknowledgements
-
-We acknowledge the use of artificial intelligence tools, specifically GitHub Copilot and ChatGPT, throughout various stages of this project. These AI assistants were employed to support code development, debugging, documentation writing, and brainstorming of methodological approaches. All AI-generated content was critically reviewed, verified, and adapted by the authors to ensure accuracy and alignment with project objectives.
+This project was implemented with the help of AI tools (GitHub Copilot with Claude Sonnet 4.5 & DeepL). They were applied for the following purposes:
+- Support with the implementation of the logic
+- Translation for documentation of presentation
+- Rephrasing, paraphrasing and spell/grammar checks for parts of the report
 
 # References {-}
