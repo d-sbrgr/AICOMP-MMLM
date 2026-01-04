@@ -700,7 +700,7 @@ The experiments conducted can be divided into the experiments with the statistic
 
 @tbl:experiment-overview summarizes the experiments that were conducted for each dataset and model type. The SVM model was not trained on the Weighted Season Averages and Sliding Window Averages datasets because the SVM was not able to handle the size of these datasets.
 
-All experiments were conducted using Weights & Biases [@wandb] sweeps with Bayesian optimization of the respective models hyperparameters (can be taken from the source code, @TODO: Source code reference), including dataset specific hyperparameters (see following sections). Like this an experiment for each model and experiment type as shown in @tbl:experiment-overview was run with a maximum of 100 runs. There was one exception for the latter for the neural networks, where one such experiment was run per loss function (@sec:loss-functions).
+All experiments were conducted using Weights & Biases [@wandb] sweeps with Bayesian optimization of the respective models hyperparameters, including dataset specific hyperparameters (see following sections). Like this an experiment for each model and experiment type as shown in @tbl:experiment-overview was run with a maximum of 100 runs. There was one exception for the latter for the neural networks, where one such experiment was run per loss function (@sec:loss-functions).
 
 At the end of each experiment, the best model according to the lowest Brier score on the validation set of the respective dataset was selected for final evaluation on the test set on Kaggle.
 
