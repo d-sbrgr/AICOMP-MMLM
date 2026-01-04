@@ -888,24 +888,17 @@ One potential drawback of the approaches explored in this project is how the dat
 Another aspect that could be explored is different sources of data. One specific example would be to base predictions on the performance of individual players within each team, rather than on the team overall.
 
 ## Lessons Learned
-This project was overall a very good opportunity, to apply what we have learned at the university so far. As opposed to previous projects, we finally had some knowledge in most of the important parts of an AI/ML project  (like, machine learning methods, experiment tracking, AI/ML project workflow) when initiating the project, which made it possible, to focus more on the project, without needing to learn new tools.
+This project was overall a very good opportunity to apply what we have learned at the university so far. As opposed to previous projects, we finally had some knowledge in most of the important parts of an AI/ML project (like machine learning methods, experiment tracking, AI/ML project workflow) when initiating the project, which made it possible to focus more on the project without needing to learn new tools.
+
 Thanks to this we were able to experiment with more models than we were used to. This forced us to come up with a solution to run the quite substantial count of experiments and track their results in a unified and comparable way.
-Another insight, that we had heard of many times already, but now was confirmed, is that increasing the model complexity and size does not necessarily lead to better performance. Even simple models, like logistic regression, were able to compete with models like XGBoost, as our results have shown.
 
+Another insight, that we had heard of many times already, but was now confirmed, is that increasing the model complexity and size does not necessarily lead to better performance. Even simple models, like logistic regression, were able to compete with models like XGBoost or deep neural networks as our results have shown.
 
-- Overall good learning experience
-- First project with pretty solid ML knowledge before project begin
-- Compared to other projects, many different models
-- Complexity not necessarily better
-- Proper data analysis
-- Clean data, good features > much data
-- OK results - soon, better results - difficult
+In a similary way we noticed, that it was rather easy to achieve respectable results, with these simpler models and data loading approaches. However once we had achieved those results, it turned out to be very difficult to improve them. We tried new and more complex machine learning models and data preparation approaches, yet were only able to improve performance marginally. This reminded us of the Pareto principle (80/20 rule).
 
-- First project with such a big array of models
-- Important to make a proper analysis of the data
-- Achieving respectably good results was easy - improving them further difficult (80/20)
-- Complexity/Larger models doesn't necessarily improve performance
-- Clean data is more important than a lot of data
+This project has shown once more, how important a preliminary data analysis is. Understanding the data your working with is essential to find and engineer important features, and to understand the results and limitations of your work.
+
+We've also seen, that data quality and well engineered features contribute a lot more to the success of such a project, than sheer data quantity. The results of our larger datasets did not improve the performance by a lot.
 
 \newpage
 
