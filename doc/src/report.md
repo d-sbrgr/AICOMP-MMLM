@@ -907,43 +907,20 @@ that leverage additional information sources.
 \newpage
 
 # Conclusion {#sec:conclusion}
-@TODO
-
-- There is a certain unpredictability in sport
-- Upset rate aligns with model accuracy
-- We addressed several gaps in existing research and compared approaches across different methodologies (see paragraph below)
-- Performance depends more on data preparation than on model (complexity). Can achieve similar performance with simple models.
-- Applicability in practice - shown that it can be used for sports prediction
-- Reusability value for other sports prediction problems
-
-Taken from Existing Research, but think rephrased would fit better here:
-
-> Our research addresses several gaps in this existing literature. While previous work often focuses on single
-> methodological paradigms (pure statistical, classical ML, or deep learning), we provide systematic comparison across
-> these approaches using identical feature sets and evaluation protocols. Our temporal ensemble strategy, where models are
-> trained separately on different historical seasons and predictions averaged, directly addresses overfitting concerns
-> while maintaining the ensemble diversity benefits documented by @yuan2015. We incorporate comprehensive feature
-> engineering informed by the non-box score factors emphasized by @kim2023, the dynamic rating principles from @kvam2006
-> and @constantinou2013, and the awareness of data contamination from @yuan2015. Finally, our parallel analysis of both
-> men's and women's tournaments enables investigation of whether predictive patterns and optimal methodologies generalize
-> across these related but distinct competitive environments.
-
 This project systematically investigated the prediction of NCAA Division I basketball tournament outcomes through a comparison of statistical baselines, classical machine learning models, and deep neural networks across multiple data preparation strategies. Our best performing model, XGBoost (@sec:classical-machine-learning-models) trained on Sliding Window Averages (@sec:sliding-window-averages), achieved a Brier score of 0.1168 (rank 238 out of 1,727), showing that respectable predictions can be achieved, even without betting market information or manual adjustment of predictions.
 
 However, looking into the other results shows (excluding the neural network with BCE + entropy penalty) that the performance only varies marginally for different model types. This is demonstrated by the small range in the Brier scores of all models of the same experiment type. Season Averages experiments have validation Brier scores ranging from 0.1526 to 0.1603 (difference of 0.0077) and test Brier scores ranging from 0.1178 to 0.1427 (difference of 0.0249). This pattern can be seen even more extremely with the Season Averages Ensemble experiments, showing validation Brier scores from 0.1674 to 0.1685 (difference of 0.0011) and test Brier scores from 0.1189 to 0.1232 (difference of 0.0043). The validation Brier scores of the Weighted Season Averages experiments range from 0.1513 to 0.1550 (difference of 0.0037) and test Brier scores from 0.1171 to 0.1247 (difference of 0.0076). Finally, the Sliding Window Averages experiments validation scores range from 0.1771 to 0.1785 (difference of 0.0014), while the test Brier scores range from 0.1168 to 0.1228 (difference of 0.006). Hence we assume that the choice of the data preparation strategy and the data itself is more important than the model type, in the context of this particular problem.
 
 Another observation we could make, is that the performance reached a plateau very early and from there on out it was difficult to improve it further. Tying back to the previous observation, the only we were able to improve it was by applying different data preparation strategies, and even then the improvements were rather small. We suggest that this plateau comes from an inherent unpredictability in sports tournaments, which is supported by @mciver2025's observation that no perfect NCAA tournament bracket has ever been recorded. The observed upset rates [@fig:seed-upsets] of 27.6% for men and 21.1% for women also support this claim. They align very closely to the accuracy of our best neural network models @TODO, which may be an indicator, that we are close to the limit of what can be achieved in general, or at least with the data at hand.
 
-Our research addresses several important gaps in existing literature. While previous work often focuses on single methodological paradigms (pure statistical, classical ML, or deep learning), we provide systematic comparison across these approaches using identical feature sets and evaluation workflows. Our temporal ensemble strategy, where models are trained separately on different historical seasons and predictions averaged, directly addresses overfitting concerns while maintaining the ensemble diversity benefits documented by @yuan2015. We incorporate comprehensive feature engineering informed by the non-box score factors emphasized by @kim2023, the dynamic rating principles from @kvam2006 and @constantinou2013, and the awareness of data contamination from @yuan2015. Our parallel analysis of both men's and women's tournaments enables investigation of whether predictive patterns and optimal methodologies generalize across these related but distinct competitive environments.
+While previous work often focused on single methods (pure statistical, classical ML, or deep learning), we tried to compare these approaches in a systematic way, using identical feature sets and evaluation workflows, including temporal ensemble strategies [@yuan2015], extensive feature engineering [@kim2023], dynamic rating principles [@kvam2006; @constantinou2013]. By showing that these approaches, be it the models, feature engineering or data preparation strategies can be applied to NCAA basketball, we suggest that the same ideas could also be extrapolated to other sports prediction problems of a similar nature.
 
-The applicability of our approaches extends beyond academic interest to practical sports prediction scenarios. Our models successfully captured team strength dynamics through ELO ratings, quality metrics, and momentum features, achieving performance levels that would be competitive in real-world betting markets or fantasy sports contexts. The systematic nature of our feature engineering and data preparation pipelines provides a reusable framework that can be adapted to other sports prediction problems, from soccer to tennis, where similar team strength and momentum dynamics apply.
+When looking at the leaderboard of the Kaggle competition, we can see that our best result (rank 238) is still quite far away from the top results (rank 1 with a Brier score of 0.1041 [@odeh2025marchMLMania]). The main difference between our approach and the top approaches is the inclusion of betting market odds, and manual adjustment of the model's predictions. Based on this we think, that the plateau we've reached, might represent the limit of what can be achieved with historical game statistics in the forms we have used them.
 
-While our purely data-driven approach demonstrated scientific rigor, the gap between our best result (rank 238) and competition-winning solutions (rank 1) highlights the value of domain expertise and information integration. Top performers leveraged betting market odds, manual bracket adjustments, and tournament structure knowledge—sources our methodology deliberately excluded. This suggests that the ceiling we encountered may represent the limit of prediction from historical game statistics alone, and that further improvements require incorporating additional data modalities or expert knowledge.
-
-In conclusion, this project demonstrates that NCAA tournament prediction is both feasible and fundamentally limited. Competitive predictions can be achieved through careful feature engineering and data preparation with relatively simple models, but the inherent unpredictability of tournament basketball sets a performance ceiling. While the project was focused
+In summary, this project demonstrates that NCAA basketball tournament prediction is both feasible and fundamentally limited. Competitive predictions can be achieved through careful feature engineering and data preparation with relatively simple models, but the inherent unpredictability of tournament basketball sets a performance ceiling. However, these models could serve as a baseline for such predictions, which could then be further enhanced by expert knowledge. While we focused on basketball, we believe that this work and the framework used could be applied to other structurally similar sports and achieve competitive results.
 
 ## Future Work
-One potential drawback of the approaches explored in this project is how the data was prepared and fed to the models. Each approach included an aggregation of the available data, which comes with a loss of information. For future work, we propose using the data without direct aggregation, instead considering the time series aspect by predicting matchup outcomes based on $n$ or all previous matchups. One approach would be to concatenate the statistics of the past $n$ games of each team in the matchup and use this as the input vector (for example, to a deep neural network) to predict the win probability of the current game. Another approach might be to feed the entire statistics of $n$ past games from each team to a recurrent neural network as samples at separate time steps and train a classification head on the latent representation of each team's series.
+One opportunity to improve the approaches explored in this project is how the data was prepared and fed to the models. Each approach included an aggregation of the available data, which comes with a loss of information. For future work, we propose using the data without direct aggregation, instead considering the time series aspect by predicting matchup outcomes based on $n$ or all previous matchups. One approach would be to concatenate the statistics of the past $n$ games of each team in the matchup and use this as the input vector (for example, to a deep neural network) to predict the win probability of the current game. Another approach might be to feed the entire statistics of $n$ past games from each team to a recurrent neural network as samples at separate time steps and train a classification head on the latent representation of each team's series.
 
 Another aspect that could be explored is different sources of data. One specific example would be to base predictions on the performance of individual players within each team, rather than on the team overall.
 
@@ -964,6 +941,7 @@ We've also seen, that data quality and well engineered features contribute a lot
 
 # Acknowledgements
 This project was implemented with the help of AI tools (GitHub Copilot with Claude Sonnet 4.5 & DeepL). They were applied for the following purposes:
+
 - Support with the implementation of the logic
 - Translation for documentation of presentation
 - Rephrasing, paraphrasing and spell/grammar checks for parts of the report
