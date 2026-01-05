@@ -1,5 +1,13 @@
 # Abstract {-}
 
+In the context of the Kaggle competition "March Machine Learning Mania 2025", this project provides a thorough comparison of various machine learning algorithms and data preparation methods for forecasting the 2025 March Madness tournaments. Using historical game data, we implemented and compared multiple modeling approaches including logistic regression, Support Vector Machines, Random Forests, XGBoost, CatBoost, and neural networks across three distinct data preparation strategies: Season Averages, Weighted Season Averages, and Sliding Window Averages.
+
+Our results reveal that data preparation strategy and feature engineering substantially outweigh model complexity in determining predictive accuracy. The best-performing model, XGBoost trained on Sliding Window Averages, achieved a Brier score of 0.1168 (rank 238 out of 1,727), outperforming more complex neural network architectures. Across all experiment types, performance varied minimally between model classes, with validation Brier scores clustering within narrow ranges (±0.01) regardless of algorithm choice. Purely statistical baselines ranged from 0.2500 (random predictions) to 0.1766 (seed-based predictions), demonstrating clear limitations of predictions based on tournament seeds alone.
+
+Ensemble strategies produced mixed results; while XGBoost and CatBoost ensembles improved over individual models (0.1213 vs. 0.1234 and 0.1208 vs. 0.1427 respectively), other architectures showed performance degradation, suggesting that model diversity matters more than simple aggregation of identical architectures. The Sliding Window Averages approach, which incorporated temporal dynamics through chronologically ordered and weighted feature aggregation, outperformed static season-wide averaging, supporting the hypothesis that team strength evolves throughout the season in ways that static metrics fail to capture.
+
+Analysis reveals an apparent performance ceiling across all approaches, with our best model still remaining substantially below competition-leading solutions (Brier score 0.1041) that incorporated betting market information and manual prediction adjustments. This plateau likely reflects inherent tournament unpredictability, supported by observed upset rates of 27.6% for men and 21.1% for women, which align closely with model accuracy limits. Our findings demonstrate that competitive NCAA tournament predictions can be achieved through careful feature engineering with relatively simple models. However, inherent uncertainty in the competition format establishes clear performance bounds. Finally, the methodological framework and data preparation strategies developed in this project offer transferable insights for tournament prediction in structurally similar sports contexts.
+
 \newpage
 
 # Introduction {#sec:introduction}
@@ -295,8 +303,6 @@ The seed feature additionally contains the conference region of the team as a pr
 
 Initially, all data sources were checked for missing values and inconsistencies, however neither missing values nor obvious wrong values were found. As mentioned in @sec:data-description, model training was only done on the detailed results datasets from @sec:regular-season-detailed-results and @sec:tournament-detailed-results, spanning from 2003 and 2010 to 2025 respectively. However, for the exploratory data analysis all available regular season data (not including detailed box-score statistics) from 1985 for men and 1998 for women was used to get a better understanding of general patterns in NCAA Division I basketball games over the years.
 
-![Regular Season Games Overview](./images/pda/MWGamesOverview.png){#fig:regular-season-games-overview width=80%}
-
 In a second step, several visualizations were created to get a better understanding of the data. @fig:regular-season-games-overview shows multiple sub-plots of general insights about regular season games over the years. Each plot shows insights for both men on the right and women on the left.
 
 The top plots show the total number of games per season, with an upward trend for men from around 3,750 games in 1985 to over 5,500 games in 2025. The women's games show a similar trend starting at around 3,800 games in 1998 to almost 5,500 games in 2025. An obvious outlier for both genders is the 2021 season, which had significantly fewer games due to the COVID-19 pandemic.
@@ -308,6 +314,8 @@ The bottom plots show the average points per game over the years, with both gend
 The most important take-away from these plots is that men's games tend to have higher scores than women's games, but patterns in the scores are similar for both genders.
 
 After having analyzed total scores in regular season matches, the next step was to analyze the score differences between winning and losing teams both in regular season and tournament games. While @fig:regular-season-games-overview included games from 1985 for men and 1998 for women, @fig:score-analysis uses the detailed box-score results described in @sec:regular-season-detailed-results and @sec:tournament-detailed-results starting from 2003 for men and 2010 for women.
+
+![Regular Season Games Overview](./images/pda/MWGamesOverview.png){#fig:regular-season-games-overview width=70%}
 
 ::: {#fig:score-analysis}
 ![Men](./images/pda/MScoreAnalysis.png){width=45%}
