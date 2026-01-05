@@ -1,241 +1,92 @@
 # Abstract {-}
 
+In the context of the Kaggle competition "March Machine Learning Mania 2025", this project provides a thorough comparison of various machine learning algorithms and data preparation methods for forecasting the 2025 NCAA March Madness tournaments. Using historical game data, we implemented and compared multiple modeling approaches including logistic regression, Support Vector Machines, Random Forests, XGBoost, CatBoost, and neural networks across three distinct data preparation strategies: Season Averages, Weighted Season Averages, and Sliding Window Averages.
+
+Our results reveal that data preparation strategy and feature engineering substantially outweigh model complexity in determining predictive accuracy. The best-performing model, XGBoost trained on Sliding Window Averages, achieved a Brier score of 0.1168 (rank 238 out of 1,727), outperforming more complex neural network architectures. Across all experiment types, performance varied minimally between model classes, with validation Brier scores clustering within narrow ranges (±0.01) regardless of algorithm choice. Purely statistical baselines ranged from 0.2500 (random predictions) to 0.1766 (seed-based predictions), demonstrating clear limitations of predictions based on tournament seeds alone.
+
+Ensemble strategies produced mixed results; while XGBoost and CatBoost ensembles improved over individual models (0.1213 vs. 0.1234 and 0.1208 vs. 0.1427 respectively), other architectures showed performance degradation, suggesting that model diversity matters more than simple aggregation of identical architectures. The Sliding Window Averages approach, which incorporated temporal dynamics through chronologically ordered and weighted feature aggregation, outperformed static season-wide averaging, supporting the hypothesis that team strength evolves throughout the season in ways that static metrics fail to capture.
+
+Analysis reveals an apparent performance ceiling across all approaches, with our best model still remaining substantially below competition-leading solutions (Brier score 0.1041) that incorporated betting market information and manual prediction adjustments. This plateau likely reflects inherent tournament unpredictability, supported by observed upset rates of 27.6% for men and 21.1% for women, which align closely with model accuracy limits. Our findings demonstrate that competitive NCAA March Madness tournament predictions can be achieved through careful feature engineering with relatively simple models. However, inherent uncertainty in the competition format establishes clear performance bounds. Finally, the methodological framework and data preparation strategies developed in this project offer transferable insights for tournament prediction in structurally similar sports contexts.
+
 \newpage
 
 # Introduction {#sec:introduction}
 
-Organized sports represent a cornerstone of global culture and entertainment. Beyond their intrinsic appeal, the sports industry and its major sporting 
-events have had significant impact on economic growth in China [@wu2024], including the emergence and growth of related industries, such as sports betting [@aga2025]. 
-In the United States (U.S.), sports betting generated $11.34 billion in revenue from January through September 2024, reflecting a year-over-year growth of 13.4% [@aga2025]. 
-This expansion subsequently increases the economic stakes associated with accurately predicting sports outcomes, as both bettors and 
-stakeholders seek to leverage data-driven insights for competitive advantage.
+Organized sports represent a cornerstone of global culture and entertainment. Beyond their intrinsic appeal, the sports industry and its major sporting events have had significant impact on economic growth in China [@wu2024], including the emergence and growth of related industries, such as sports betting [@aga2025]. In the United States (U.S.), sports betting generated $11.34 billion in revenue from January through September 2024, reflecting a year-over-year growth of 13.4% [@aga2025]. This expansion subsequently increases the economic stakes associated with accurately predicting sports outcomes, as both bettors and stakeholders seek to leverage data-driven insights for competitive advantage.
 
-As an exemplary domain for sports forecasting, this project tackles the problem of predicting NCAA basketball tournament outcomes through deployment and comparison of naive 
-statistical and machine learning (ML) approaches. Our work is framed within the context of the Kaggle competition "March Machine Learning Mania 2025," which tasks 
-participants with forecasting match results for both the men's and women's NCAA Division I March Madness basketball tournaments [@mmlm2025]. 
-While our primary objective is to maximize predictive performance on the competition leaderboard, we also aim to evaluate the relative strengths 
-and limitations of different modeling strategies.
+As an exemplary domain for sports forecasting, this project tackles the problem of predicting NCAA basketball tournament outcomes through deployment and comparison of naive statistical and machine learning (ML) approaches. Our work is framed within the context of the Kaggle competition "March Machine Learning Mania 2025," which tasks participants with forecasting match results for both the men's and women's NCAA Division I March Madness basketball tournaments [@mmlm2025]. While our primary objective is to maximize predictive performance on the competition leaderboard, we also aim to evaluate the relative strengths and limitations of different modeling strategies.
 
-The NCAA March Madness tournaments serve as particularly compelling case studies for sports prediction, shown through the research of @kim2023 
-and their application of various ML approaches. These single-elimination competitions determine the national champions in Division I college basketball, 
-with each tournament featuring 68 teams competing over approximately three weeks in March and April. Teams qualify through two mechanisms: Automatic bids 
-awarded to conference tournament winners, and at-large selections based on regular season performance metrics. The selection committee then assigns seeds 
-within four regional brackets, establishing the tournament structure and initial matchups [@ncaa_marchmadness2025].
+The NCAA March Madness tournaments serve as particularly compelling case studies for sports prediction, shown through the research of @kim2023 and their application of various ML approaches. These single-elimination competitions determine the national champions in Division I college basketball, with each tournament featuring 68 teams competing over approximately three weeks in March and April. Teams qualify through two mechanisms: Automatic bids awarded to conference tournament winners, and at-large selections based on regular season performance metrics. The selection committee then assigns seeds within four regional brackets, establishing the tournament structure and initial matchups [@ncaa_marchmadness2025].
 
-We approach this challenge by implementing and comparing several modeling frameworks, ranging from traditional statistical methods to state-of-the-art (SOTA)
-machine learning methods. Our analysis addresses three central questions: First, what level of predictive accuracy can be achieved using different 
-methodological approaches? Second, how do factors such as data availability, feature engineering, and model architecture influence prediction quality? 
-Third, are there meaningful differences in predictability between the men's and women's tournaments that reflect underlying competitive dynamics?
+We approach this challenge by implementing and comparing several modeling frameworks, ranging from traditional statistical methods to state-of-the-art (SOTA) machine learning methods. Our analysis addresses three central questions: First, what level of predictive accuracy can be achieved using different methodological approaches? Second, how do factors such as data availability, feature engineering, and model architecture influence prediction quality? Third, are there meaningful differences in predictability between the men's and women's tournaments that reflect underlying competitive dynamics?
 
 ## Kaggle Competition
 
-The "March Machine Learning Mania 2025" competition on Kaggle [@mmlm2025] is an annual event that challenges data scientists
-and sports enthusiasts to develop models predicting the outcomes of the "March Madness" NCAA Division I basketball championship tournaments. 
-Participants are provided with a carefully curated dataset including historical game results, team statistics, and tournament brackets from previous years. 
-A submission consists of predicted win probabilities for every possible matchup for both women's and men's tournaments in 2025. 
-Every participating team may mark two submissions for evaluation on the public leaderboard of which the better one is considered. 
-The evaluation metric used in the competition is the Brier score [@brier1950], which is mathematically identical to the mean squared error between 
-predicted probabilities and binary outcomes. The competition started on February 10, 2025, and ended on March 20, 2025, giving teams exactly
-one month to develop and refine their models. Also, the competition includes a prize money pool of $50,000 attracting 1,727 teams that 
-are listed on the competition's leaderboard.
+The "March Machine Learning Mania 2025" competition on Kaggle [@mmlm2025] is an annual event that challenges data scientists and sports enthusiasts to develop models predicting the outcomes of the NCAA Division I March Madness basketball championship tournaments. Participants are provided with a carefully curated dataset including historical game results, team statistics, and tournament brackets from previous years. A submission consists of predicted win probabilities for every possible matchup for both women's and men's tournaments in 2025. Every participating team may mark two submissions for evaluation on the public leaderboard of which the better one is considered. The evaluation metric used in the competition is the Brier score [@brier1950], which is mathematically identical to the mean squared error between predicted probabilities and binary outcomes. The competition started on February 10, 2025, and ended on March 20, 2025, giving teams just over one month to develop and refine their models. Also, the competition includes a prize money pool of $50,000 attracting 1,727 teams that are listed on the competition's leaderboard.
 
 \newpage
 
 # Existing Research
 
-The prediction of NCAA Division I basketball tournament outcomes represents a compelling intersection of sports
-analytics, statistical modeling, and machine learning. Each year, the NCAA men's and women's basketball tournaments
-captivate millions of viewers and generate billions of dollars in legal and illegal wagers [@kvam2006].
-Despite this enormous interest and the application of increasingly sophisticated predictive methods, no verifiable
-perfect bracket has ever been documented [@mciver2025], with estimated odds of correctly predicting all
-tournament games at approximately 1 in 120.2 billion even with basketball knowledge [@sprint2024]. The
-single-elimination format and inherent unpredictability of tournament play create a challenging prediction environment
-that has motivated researchers to develop approaches ranging from traditional statistical methods to state-of-the-art
-machine learning architectures.
+The prediction of NCAA Division I basketball tournament outcomes represents a compelling intersection of sports analytics, statistical modeling, and machine learning. Each year, the NCAA men's and women's basketball tournaments captivate millions of viewers and generate billions of dollars in legal and illegal wagers [@kvam2006]. Despite this enormous interest and the application of increasingly sophisticated predictive methods, no verifiable perfect bracket has ever been documented [@mciver2025], with estimated odds of correctly predicting all tournament games at approximately 1 in 120.2 billion even with basketball knowledge [@sprint2024]. The single-elimination format and inherent unpredictability of tournament play create a challenging prediction environment that has motivated researchers to develop approaches ranging from traditional statistical methods to state-of-the-art machine learning architectures.
 
 ## Traditional Statistical Approaches
 
-Early research in NCAA tournament prediction largely relied on seed-based methodologies, exploiting the tournament
-selection committee's rankings of teams from 1 (strongest) to 16 (weakest) within each regional bracket.
-@stekler2012 demonstrated that seed-based predictions using probit models achieved approximately 72.3%
-accuracy across the first four rounds of tournaments from 2003 to 2010, while consensus rankings from multiple polling
-sources achieved marginally better performance at 73.6%. However, these seed-based approaches face fundamental
-structural limitations. As @stekler2012 notes, "the seedings in the regional rounds cannot be used in making
-predictions for these final two rounds" because seeds only provide relative rankings within regions rather than absolute
-team strength across the entire tournament field. This constraint necessitates alternative approaches for predicting
-Final Four and championship outcomes.
+Early research in NCAA March Madness tournament prediction largely relied on seed-based methodologies, exploiting the tournament selection committee's rankings of teams from 1 (strongest) to 16 (weakest) within each regional bracket. @stekler2012 demonstrated that seed-based predictions using probit models achieved approximately 72.3% accuracy across the first four rounds of tournaments from 2003 to 2010, while consensus rankings from multiple polling sources achieved marginally better performance at 73.6%. However, these seed-based approaches face fundamental structural limitations. As @stekler2012 notes, "the seedings in the regional rounds cannot be used in making predictions for these final two rounds" because seeds only provide relative rankings within regions rather than absolute team strength across the entire tournament field. This constraint necessitates alternative approaches for predicting Final Four and championship outcomes.
 
-Beyond simple seed comparisons, researchers developed more sophisticated rating systems to estimate team strength.
-@kvam2006 compared their proposed model against established systems including the Associated Press poll,
-ESPN/USA Today coaches poll, the Ratings Percentage Index (RPI), and the Sagarin and Massey ratings. Each of these
-systems attempts to rank teams based on combinations of winning percentage, strength of schedule, and opponent quality.
-@shen2016 provides a comprehensive literature review of traditional methods, highlighting the progression
-from purely win-loss based approaches to models incorporating margin of victory and opponent strength. The consistent
-finding across these traditional statistical approaches is that while seed-based predictions provide a reasonable
-baseline, they leave substantial room for improvement through more nuanced team strength estimation.
+Beyond simple seed comparisons, researchers developed more sophisticated rating systems to estimate team strength. @kvam2006 compared their proposed model against established systems including the Associated Press poll, ESPN/USA Today coaches poll, the Ratings Percentage Index (RPI), and the Sagarin and Massey ratings. Each of these systems attempts to rank teams based on combinations of winning percentage, strength of schedule, and opponent quality. @shen2016 provides a comprehensive literature review of traditional methods, highlighting the progression from purely win-loss based approaches to models incorporating margin of victory and opponent strength. The consistent finding across these traditional statistical approaches is that while seed-based predictions provide a reasonable baseline, they leave substantial room for improvement through more nuanced team strength estimation.
 
 ## Rating Systems and Team Strength Estimation
 
-Rating systems provide dynamic, continuously updated measures of team strength that overcome many limitations of static
-tournament seeds or seasonal win-loss records. @kvam2006 introduced a Markov chain model for NCAA basketball
-where teams represent states and game outcomes determine transition probabilities. Their approach uses logistic
-regression to populate these transition probabilities based on win-loss records, home advantage, and margin of victory,
-requiring only basic scoreboard data. The steady-state probabilities of the Markov chain then provide team rankings,
-with the intuition that "the current state of the voter corresponds to the team that the voter now believes to be the
-best" [@kvam2006].
+Rating systems provide dynamic, continuously updated measures of team strength that overcome many limitations of static tournament seeds or seasonal win-loss records. @kvam2006 introduced a Markov chain model for NCAA basketball where teams represent states and game outcomes determine transition probabilities. Their approach uses logistic regression to populate these transition probabilities based on win-loss records, home advantage, and margin of victory, requiring only basic scoreboard data. The steady-state probabilities of the Markov chain then provide team rankings, with the intuition that "the current state of the voter corresponds to the team that the voter now believes to be the best" [@kvam2006].
 
-The Elo rating system, originally developed for chess by Arpad Elo [@Elo1978], has been extensively adapted for
-basketball and other team sports. @gomez2024 provides formal mathematical foundations for Elo in sports
-contexts, explaining how the system updates team ratings after each game based on the expected versus actual outcome.
-The probability that team A defeats team B is modeled as a logistic function of their rating difference, with the victor
-gaining rating points (and the loser losing an equal amount) proportional to the upset magnitude. @gomez2024
-extends the classical Elo framework through stochastic process formulations that enable score prediction throughout a
-game rather than just final outcomes. For basketball specifically, the authors demonstrate that Elo-based systems
-achieve competitive predictive performance while maintaining computational simplicity and interpretability.
+The Elo rating system, originally developed for chess by Arpad Elo [@Elo1978], has been extensively adapted for basketball and other team sports. @gomez2024 provides formal mathematical foundations for Elo in sports contexts, explaining how the system updates team ratings after each game based on the expected versus actual outcome. The probability that team A defeats team B is modeled as a logistic function of their rating difference, with the victor gaining rating points (and the loser losing an equal amount) proportional to the upset magnitude. @gomez2024 extends the classical Elo framework through stochastic process formulations that enable score prediction throughout a game rather than just final outcomes. For basketball specifically, the authors demonstrate that Elo-based systems achieve competitive predictive performance while maintaining computational simplicity and interpretability.
 
-Dynamic rating systems that separately track home and away performance or incorporate temporal decay of older results
-offer further refinements. While @constantinou2013 develops their pi-rating system for football,
-their methodology of maintaining separate home and away ratings with learning rates that determine how newly acquired
-information updates ratings provides insights applicable to basketball. The key principle, as they state, is that "a
-rating system should provide relative measures of superiority between adversaries and overcomes all of the above
-complications" of static league tables or tournament seeds [@constantinou2013]. Empirical evidence from
-basketball analytics supports these dynamic approaches: @migliorati2021 demonstrates in NBA contexts that
-models using Elo ratings or relative win frequencies substantially outperform models based on complex box score
-statistics, suggesting that carefully designed single features capturing team strength can be more effective than
-high-dimensional statistical aggregations.
+Dynamic rating systems that separately track home and away performance or incorporate temporal decay of older results offer further refinements. While @constantinou2013 develops their pi-rating system for football, their methodology of maintaining separate home and away ratings with learning rates that determine how newly acquired information updates ratings provides insights applicable to basketball. The key principle, as they state, is that "a rating system should provide relative measures of superiority between adversaries and overcomes all of the above complications" of static league tables or tournament seeds [@constantinou2013]. Empirical evidence from basketball analytics supports these dynamic approaches: @migliorati2021 demonstrates in NBA contexts that models using Elo ratings or relative win frequencies substantially outperform models based on complex box-score statistics, suggesting that carefully designed single features capturing team strength can be more effective than high-dimensional statistical aggregations.
 
-## Feature Engineering: Beyond Box Scores
+## Feature Engineering: Beyond Box-scores
 
-While traditional box score statistics (field goal percentages, rebounds, assists, turnovers) provide obvious predictive
-signals, research increasingly demonstrates the value of alternative feature sources. @lopez2015 argues
-that Las Vegas point spreads (betting odds) represent highly efficient aggregations of available information, as sportsbooks have
-strong incentives to set accurate lines to balance betting action. Their winning entry in the 2014 Kaggle March Machine
-Learning Mania competition combined point spread data with possession-based efficiency metrics from Ken Pomeroy's
-analytics platform. As they conclude, "we provide evidence that the combination of modest statistical methods with
-informative data can meet or exceed the accuracy of more complex models" [@lopez2015]. Pomeroy's efficiency
-metrics, detailed in @lopez2015, measure offensive and defensive points per 100 possessions adjusted for
-opponent strength, offering normalized team performance measures that account for pace-of-play variations across teams.
+While traditional box-score statistics (field goal percentages, rebounds, assists, turnovers) provide obvious predictive signals, research increasingly demonstrates the value of alternative feature sources. @lopez2015 argues that Las Vegas point spreads (betting odds) represent highly efficient aggregations of available information, as sportsbooks have strong incentives to set accurate lines to balance betting action. Their winning entry in the 2014 Kaggle March Machine Learning Mania competition combined point spread data with possession-based efficiency metrics from Ken Pomeroy's analytics platform. As they conclude, "we provide evidence that the combination of modest statistical methods with informative data can meet or exceed the accuracy of more complex models" [@lopez2015]. Pomeroy's efficiency metrics, detailed in @lopez2015, measure offensive and defensive points per 100 possessions adjusted for opponent strength, offering normalized team performance measures that account for pace-of-play variations across teams.
 
-A critical insight from recent research concerns data contamination. @yuan2015 explicitly addresses this
-issue in their mixture-of-modelers approach, defining contaminated data as "archival data for a given NCAA season which
-incorporated the results of the final tournament from that year." Many publicly available datasets and rating systems
-update continuously throughout the season, inadvertently including post-tournament information when researchers train
-models on historical data. For example, metrics like games played (GP) strongly predict tournament success in historical
-data simply because teams that advance further play more tournament games, but this information is not available
-pre-tournament for new predictions. @yuan2015 demonstrates that careful use of pre-tournament versions of
-rating systems substantially improves genuine predictive performance.
+A critical insight from recent research concerns data contamination. @yuan2015 explicitly addresses this issue in their mixture-of-modelers approach, defining contaminated data as "archival data for a given NCAA season which incorporated the results of the final tournament from that year." Many publicly available datasets and rating systems update continuously throughout the season, inadvertently including post-tournament information when researchers train models on historical data. For example, metrics like games played (GP) strongly predict tournament success in historical data simply because teams that advance further play more tournament games, but this information is not available pre-tournament for new predictions. @yuan2015 demonstrates that careful use of pre-tournament versions of rating systems substantially improves genuine predictive performance.
 
-Beyond statistical metrics, @kim2023 emphasizes non-box score factors that influence tournament outcomes.
-Their analysis of 1370 tournament games from 2006-2017 incorporates conference affiliation, geographic proximity to 
-tournament venues (enabling larger fan support), travel distance and time zone effects on player performance, 
-and teams' historical tournament experience. As they note, "little research has focused on situational factors in 
-predicting sports tournament outcomes" [@kim2023], yet these contextual elements can substantially impact game results. 
-Recent deep learning applications further expand the feature space: @habib2025 combines Elo ratings with GLM-based team
-quality metrics derived from historical match results and strength of opposition, demonstrating that sophisticated
-feature engineering enhances model performance across multiple architectures.
+Beyond statistical metrics, @kim2023 emphasizes non-box-score factors that influence tournament outcomes. Their analysis of 1370 tournament games from 2006-2017 incorporates conference affiliation, geographic proximity to tournament venues (enabling larger fan support), travel distance and time zone effects on player performance, and teams' historical tournament experience. As they note, "little research has focused on situational factors in predicting sports tournament outcomes" [@kim2023], yet these contextual elements can substantially impact game results. Recent deep learning applications further expand the feature space: @habib2025 combines Elo ratings with GLM-based team quality metrics derived from historical match results and strength of opposition, demonstrating that sophisticated feature engineering enhances model performance across multiple architectures.
 
 ## Ensemble and Mixture Approaches
 
-Ensemble methods that combine predictions from multiple models have proven particularly effective for tournament
-prediction. @yuan2015 documents their mixture-of-modelers approach where a Harvard University team
-collectively developed over 30 different models for the 2014 NCAA tournament. These models employed diverse algorithms
-including multiple variants of logistic regression (with L1 regularization, L2 regularization, and backward elimination
-for feature selection), decision trees, and neural networks. The team optimized predictions using log loss as the
-evaluation metric, leading to probability estimates that are well-calibrated instead of merely accurate classifications. 
-Eventually, their ensemble strategy improved robustness against overfitting to particular patterns in the training data.
+Ensemble methods that combine predictions from multiple models have proven particularly effective for tournament prediction. @yuan2015 documents their mixture-of-modelers approach where a Harvard University team collectively developed over 30 different models for the 2014 NCAA March Madness tournament. These models employed diverse algorithms including multiple variants of logistic regression (with L1 regularization, L2 regularization, and backward elimination for feature selection), decision trees, and neural networks. The team optimized predictions using log loss as the evaluation metric, leading to probability estimates that are well-calibrated instead of merely accurate classifications. Eventually, their ensemble strategy improved robustness against overfitting to particular patterns in the training data.
 
-Comparative studies of individual algorithm performance provide context for ensemble benefits. @shen2016
-evaluated Support Vector Machines (SVM), Random Forests (RF), and Bayesian models with probability self-consistency
-constraints on March Madness data, finding RF achieved 68.2% accuracy, SVM 66.1%, and their Bayesian approach
-approximately 50%. Similarly, @kim2023 compared five machine learning approaches on 685 tournament games,
-reporting Neural Networks achieved the highest accuracy at 67%, followed by SVM (65%), k-Nearest Neighbors 
-(63%), logistic regression (63%), and Random Forests (61%). These relatively modest performance differences across
-algorithms, combined with the documented success of ensembles, suggest that model diversity and appropriate feature
-engineering may be more important than algorithm selection alone.
+Comparative studies of individual algorithm performance provide context for ensemble benefits. @shen2016 evaluated Support Vector Machines (SVM), Random Forests (RF), and Bayesian models with probability self-consistency constraints on NCAA March Madness tournament data, finding RF achieved 68.2% accuracy, SVM 66.1%, and their Bayesian approach approximately 50%. Similarly, @kim2023 compared five machine learning approaches on 685 tournament games, reporting Neural Networks achieved the highest accuracy at 67%, followed by SVM (65%), k-Nearest Neighbors (63%), logistic regression (63%), and Random Forests (61%). These relatively modest performance differences across algorithms, combined with the documented success of ensembles, suggest that model diversity and appropriate feature engineering may be more important than algorithm selection alone.
 
-A critical consideration for ensemble approaches in tournament prediction is the risk of overfitting to historical
-tournament data. As @lopez2015 demonstrates through simulation, even with perfectly accurate game-level
-probability estimates, the stochastic nature of tournament brackets means a model might have only approximately 12%
-probability of finishing first among hundreds of competitors and less than 50% probability of finishing in the top ten.
-This inherent variance motivates ensemble strategies that aggregate across different training approaches to reduce
-model-specific overfitting while maintaining predictive accuracy.
+A critical consideration for ensemble approaches in tournament prediction is the risk of overfitting to historical tournament data. As @lopez2015 demonstrates through simulation, even with perfectly accurate game-level probability estimates, the stochastic nature of tournament brackets means a model might have only approximately 12% probability of finishing first among hundreds of competitors and less than 50% probability of finishing in the top ten. This inherent variance motivates ensemble strategies that aggregate across different training approaches to reduce model-specific overfitting while maintaining predictive accuracy.
 
 ## Machine Learning and Deep Learning Approaches
 
-The progression from classical machine learning to deep learning architectures reflects both methodological advancement
-and the challenge of limited training data in NCAA contexts. Classical ML comparisons consistently show competitive
-performance across algorithms when provided with well-engineered features. @kim2023 reports that 
-Neural Networks marginally outperformed other classical algorithms (67% vs 61-65% accuracy), though all approaches
-clustered within a narrow performance range. @shen2016 similarly finds Random Forests and SVMs performing
-comparably (68% vs 66%). These modest differences suggest that for NCAA prediction, where training data is limited to
-historical tournament games (63 games per season and team), the choice among classical ML algorithms matters less than feature
-quality and avoiding overfitting.
+The progression from classical machine learning to deep learning architectures reflects both methodological advancement and the challenge of limited training data in NCAA contexts. Classical ML comparisons consistently show competitive performance across algorithms when provided with well-engineered features. @kim2023 reports that Neural Networks marginally outperformed other classical algorithms (67% vs 61-65% accuracy), though all approaches clustered within a narrow performance range. @shen2016 similarly finds Random Forests and SVMs performing comparably (68% vs 66%). These modest differences suggest that for NCAA prediction, where training data is limited to historical tournament games (63 games per season and team), the choice among classical ML algorithms matters less than feature quality and avoiding overfitting.
 
-Recent work has explored deep learning architectures specifically designed for sequential and temporal data.
-@habib2025 compares Long Short-Term Memory (LSTM) networks and Transformer models for predicting the 2025
-NCAA tournaments using data from 2003-2024. Their comprehensive feature set includes Elo ratings, GLM-based team quality
-metrics, tournament seeds, and aggregated box score statistics. Critically, they evaluate models using both Binary
-Cross-Entropy (BCE) loss and Brier loss functions, revealing important tradeoffs: Transformer models optimized with BCE
-achieved superior discriminative power (AUC of 0.8473), while LSTM models trained with Brier loss demonstrated better
-probabilistic calibration (Brier score of 0.1589). As @habib2025 discusses, the choice between maximizing
-discrimination versus calibration depends on the specific prediction task and evaluation criteria.
+Recent work has explored deep learning architectures specifically designed for sequential and temporal data. @habib2025 compares Long Short-Term Memory (LSTM) networks and Transformer models for predicting the 2025 NCAA March Madness tournaments using data from 2003-2024. Their comprehensive feature set includes Elo ratings, GLM-based team quality metrics, tournament seeds, and aggregated box-score statistics. Critically, they evaluate models using both Binary Cross-Entropy (BCE) loss and Brier loss functions, revealing important tradeoffs: Transformer models optimized with BCE achieved superior discriminative power (AUC of 0.8473), while LSTM models trained with Brier loss demonstrated better probabilistic calibration (Brier score of 0.1589). As @habib2025 discusses, the choice between maximizing discrimination versus calibration depends on the specific prediction task and evaluation criteria.
 
-@migliorati2021 examines feature selection through deep learning for NBA prediction, demonstrating that
-relatively simple Neural Network architectures (few layers, modest numbers of units) can achieve strong performance when
-the input features effectively capture team strength. Their finding that single features like Elo ratings outperform
-complex box score aggregations suggests that deep learning's primary value may lie in learning optimal feature
-representations rather than necessarily requiring deep architectures. The development of home/away feature variants
-further illustrates how domain knowledge about basketball (home court advantage effects) can be incorporated into neural
-network inputs.
+@migliorati2021 examines feature selection through deep learning for NBA prediction, demonstrating that relatively simple Neural Network architectures (few layers, modest numbers of units) can achieve strong performance when the input features effectively capture team strength. Their finding that single features like Elo ratings outperform complex box-score aggregations suggests that deep learning's primary value may lie in learning optimal feature representations rather than necessarily requiring deep architectures. The development of home/away feature variants further illustrates how domain knowledge about basketball (home court advantage effects) can be incorporated into neural network inputs.
 
-Novel approaches continue to emerge. @sprint2024 explores using Large Language Models (LLMs) with social
-network data, collecting over 1.1 million tweets from official Division I team Twitter accounts across 2021-23 seasons.
-Their approach employs few-shot and zero-shot learning techniques, feeding recent tweets as context to LLMs to predict
-game outcomes, and combining LLM-generated embeddings with XGBoost for classification. While innovative, these
-cutting-edge methods have not yet demonstrated clear superiority over well-executed traditional approaches, highlighting
-the ongoing challenge of balancing methodological novelty with practical prediction performance.
+Novel approaches continue to emerge. @sprint2024 explores using Large Language Models (LLMs) with social network data, collecting over 1.1 million tweets from official Division I team Twitter accounts across 2021-23 seasons. Their approach employs few-shot and zero-shot learning techniques, feeding recent tweets as context to LLMs to predict game outcomes, and combining LLM-generated embeddings with XGBoost for classification. While innovative, these cutting-edge methods have not yet demonstrated clear superiority over well-executed traditional approaches, highlighting the ongoing challenge of balancing methodological novelty with practical prediction performance.
 
 ## Model Evaluation and Quantifying Success
 
-Appropriate evaluation metrics are crucial for assessing predictive performance, particularly in probabilistic
-forecasting contexts. @stekler2012 employs the Brier Score (also called Quadratic Probability Score), which
-measures the mean squared error between predicted probabilities and binary outcomes. For each game, if a model predicts
-team A has probability p of winning and A actually wins, the contribution to the Brier Score is $(1-p)^{2}$, while if A loses
-it is $p^{2}$ [@brier1950]. This metric explicitly penalizes confident incorrect predictions more heavily than uncertain predictions,
-encouraging well-calibrated probability estimates.
+Appropriate evaluation metrics are crucial for assessing predictive performance, particularly in probabilistic forecasting contexts. @stekler2012 employs the Brier score (also called Quadratic Probability Score), which measures the mean squared error between predicted probabilities and binary outcomes. For each game, if a model predicts team A has probability p of winning and A actually wins, the contribution to the Brier score is $(1-p)^{2}$, while if A loses it is $p^{2}$ [@brier1950]. This metric explicitly penalizes confident incorrect predictions more heavily than uncertain predictions, encouraging well-calibrated probability estimates.
 
-@yuan2015 details the log loss evaluation function used in passed Kaggle competitions, defined as the negative
-log-likelihood of the observed outcomes given predicted probabilities. Mathematically, for N games with predicted
-probability $\hat{y}_i$ and observed outcome $y_i$, log loss equals $-\frac{1}{N}\sum_{i=1}^{N}[y_i \log(\hat{y}_i) + (1-y_i)\log(1-\hat{y}_i)]$. 
-This metric, equivalent to the loss function minimized in logistic regression, heavily penalizes confident incorrect predictions (approaching
-infinity as $\hat{y}$ approaches 0 for an observed win). @habib2025 discusses the distinction between
-discriminative metrics like AUC-ROC (measuring a model's ability to rank teams correctly) and calibration metrics like
-Brier score (measuring whether predicted probabilities match empirical results), noting that optimization for one
-may not guarantee optimization for the other.
+@yuan2015 details the log loss evaluation function used in past Kaggle competitions, defined as the negative log-likelihood of the observed outcomes given predicted probabilities. Mathematically, for N games with predicted probability $\hat{y}_i$ and observed outcome $y_i$, log loss equals $-\frac{1}{N}\sum_{i=1}^{N}[y_i \log(\hat{y}_i) + (1-y_i)\log(1-\hat{y}_i)]$. This metric, equivalent to the loss function minimized in logistic regression, heavily penalizes confident incorrect predictions (approaching infinity as $\hat{y}$ approaches 0 for an observed win). @habib2025 discusses the distinction between discriminative metrics like AUC-ROC (measuring a model's ability to rank teams correctly) and calibration metrics like Brier score (measuring whether predicted probabilities match empirical results), noting that optimization for one may not guarantee optimization for the other.
 
 ## Synthesis and Research Gaps
 
-The existing research reveals several consistent themes across methodologies and time periods. First, feature
-engineering and data quality consistently emerge as more important than algorithm selection. @lopez2015's success with 
-"modest statistical methods" combined with Las Vegas spreads and @migliorati2021's finding that simple Elo ratings
-outperform complex box score models both underscore this principle. Second, ensemble approaches that aggregate
-predictions across diverse models generally outperform individual models, as @yuan2015's mixture-of-modelers work
-demonstrates. Third, proper evaluation requires careful attention to both the metrics employed and the role of
-stochastic variation in tournament outcomes.
+The existing research reveals several consistent themes across methodologies and time periods. First, feature engineering and data quality consistently emerge as more important than algorithm selection. @lopez2015's success with "modest statistical methods" combined with Las Vegas spreads and @migliorati2021's finding that simple Elo ratings outperform complex box-score models both underscore this principle. Second, ensemble approaches that aggregate predictions across diverse models generally outperform individual models, as @yuan2015's mixture-of-modelers work demonstrates. Third, proper evaluation requires careful attention to both the metrics employed and the role of stochastic variation in tournament outcomes.
 
-Several limitations persist across the literature. The scarcity of training data remains fundamental—with only 63
-tournament games per season and team, and structural changes in team composition from year to year, models risk overfitting to
-small sample statistical noise. The data contamination issue highlighted by @yuan2015 suggests that reported historical
-performance may overstate true predictive capability when researchers inadvertently include post-tournament information.
-The persistent difficulty in predicting upsets, particularly in early rounds where lower-seeded teams occasionally
-defeat favorites, indicates that current approaches may not fully capture the factors driving individual game variance.
+Several limitations persist across the literature. The scarcity of training data remains fundamental—with only 63 tournament games per season and team, and structural changes in team composition from year to year, models risk overfitting to small sample statistical noise. The data contamination issue highlighted by @yuan2015 suggests that reported historical performance may overstate true predictive capability when researchers inadvertently include post-tournament information. The persistent difficulty in predicting upsets, particularly in early rounds where lower-seeded teams occasionally defeat favorites, indicates that current approaches may not fully capture the factors driving individual game variance.
 
 \newpage
 
 # Data {#sec:data}
 
-The dataset used for this project was obtained from the Kaggle competition "March Machine Learning Mania 2025" [@mmlm2025]. 
-It consists of a total of 36 CSV files containing various information about NCAA Division I basketball games, teams, venues, coaches and tournaments.
+The dataset used for this project was obtained from the Kaggle competition "March Machine Learning Mania 2025" [@mmlm2025]. It consists of a total of 36 CSV files containing various information about NCAA Division I basketball games, teams, venues, coaches and tournaments.
 
 ## Data Description {#sec:data-description}
 
@@ -295,8 +146,6 @@ The seed feature additionally contains the conference region of the team as a pr
 
 Initially, all data sources were checked for missing values and inconsistencies, however neither missing values nor obvious wrong values were found. As mentioned in @sec:data-description, model training was only done on the detailed results datasets from @sec:regular-season-detailed-results and @sec:tournament-detailed-results, spanning from 2003 and 2010 to 2025 respectively. However, for the exploratory data analysis all available regular season data (not including detailed box-score statistics) from 1985 for men and 1998 for women was used to get a better understanding of general patterns in NCAA Division I basketball games over the years.
 
-![Regular Season Games Overview](./images/pda/MWGamesOverview.png){#fig:regular-season-games-overview width=80%}
-
 In a second step, several visualizations were created to get a better understanding of the data. @fig:regular-season-games-overview shows multiple sub-plots of general insights about regular season games over the years. Each plot shows insights for both men on the right and women on the left.
 
 The top plots show the total number of games per season, with an upward trend for men from around 3,750 games in 1985 to over 5,500 games in 2025. The women's games show a similar trend starting at around 3,800 games in 1998 to almost 5,500 games in 2025. An obvious outlier for both genders is the 2021 season, which had significantly fewer games due to the COVID-19 pandemic.
@@ -308,6 +157,8 @@ The bottom plots show the average points per game over the years, with both gend
 The most important take-away from these plots is that men's games tend to have higher scores than women's games, but patterns in the scores are similar for both genders.
 
 After having analyzed total scores in regular season matches, the next step was to analyze the score differences between winning and losing teams both in regular season and tournament games. While @fig:regular-season-games-overview included games from 1985 for men and 1998 for women, @fig:score-analysis uses the detailed box-score results described in @sec:regular-season-detailed-results and @sec:tournament-detailed-results starting from 2003 for men and 2010 for women.
+
+![Regular Season Games Overview](./images/pda/MWGamesOverview.png){#fig:regular-season-games-overview width=70%}
 
 ::: {#fig:score-analysis}
 ![Men](./images/pda/MScoreAnalysis.png){width=45%}
@@ -326,9 +177,9 @@ Another interesting aspect to sports is the location where games are played and 
 
 The left plot in @fig:location-analysis shows the percentage of games won by the home team (left) and away team (right) for both men (blue) and women (orange). Overall, both genders show a significantly higher win percentage for home teams than away teams, with men having a home win percentage of 65.8% and women 61.2%. The right plot supports this finding by showing the average margin of victory for the winning team based on game location. Both genders show the highest margin of victory at home games, then at neutral locations and the lowest margin of victory for away games, again indicating that away-games are harder to win. 
 
-For the NCAA tournaments, all games are played at neutral locations, which lowers the significance of this finding in the context of this project, but for a task where regular season games are predicted game location must definitely be taken into account.
+For the NCAA March Madness tournaments, all games are played at neutral locations, which lowers the significance of this finding in the context of this project, but for a task where regular season games are predicted game location must definitely be taken into account.
 
-As described in @sec:introduction, teams entering the NCAA tournament are seeded from 1 to 16 within their regional brackets. These seeds are intended to reflect the relative strength of the teams, with lower seeds being stronger teams. An interesting question is how well these seeds reflect the actual outcomes of the games. @fig:seed-upsets shows for both men (left) and women (right) both the win percentage of a given seed with a trend line (left) and the percentage of upsets in a pie chart (right).
+As described in @sec:introduction, teams entering the NCAA March Madness tournament are seeded from 1 to 16 within their regional brackets. These seeds are intended to reflect the relative strength of the teams, with lower seeds being stronger teams. An interesting question is how well these seeds reflect the actual outcomes of the games. @fig:seed-upsets shows for both men (left) and women (right) both the win percentage of a given seed with a trend line (left) and the percentage of upsets in a pie chart (right).
 
 ::: {#fig:seed-upsets}
 ![Men](./images/pda/MSeedUpsets.png){width=45%}
@@ -361,17 +212,17 @@ All other positively correlated features such as offensive rebounds (WOR), defen
 Before training the machine learning models, several features were engineered from the raw game data. The aim of these features was to capture the 
 strength of a team, either in their athletic abilities or their mental resilience.
 
-### ELO Rating {#sec:elo-rating}
+### Elo Rating {#sec:elo-rating}
 
-The ELO rating system is a method for calculating the relative skill levels of players in the context of chess proposed by @Elo1978. It has since been adapted for various sports, including basketball.
+The Elo rating system is a method for calculating the relative skill levels of players in the context of chess proposed by @Elo1978. It has since been adapted for various sports, including basketball.
 
-Since the ELO system is a proven system in the world of chess and various other sports, the hope is that this translates to indicating the team strength for basketball games. In the context of NCAA basketball, the entire history of regular season and tournament games from @sec:data is processed in chronological order, sorted by season and day number, to ensure accurate sequential updating. Initially, each team is assigned a base ELO rating (1,000) and from there that rating is updated after each game based on the outcome and the expected probability of winning. The win probability for a matchup between team $A$ and team $B$ is calculated using the logistic function:
+Since the Elo system is a proven system in the world of chess and various other sports, the hope is that this translates to indicating the team strength for basketball games. In the context of NCAA basketball, the entire history of regular season and tournament games from @sec:data is processed in chronological order, sorted by season and day number, to ensure accurate sequential updating. Initially, each team is assigned a base Elo rating (1,000) and from there that rating is updated after each game based on the outcome and the expected probability of winning. The win probability for a matchup between team $A$ and team $B$ is calculated using the logistic function:
 
 $$
 P(A \text{ beats } B) = \frac{1}{1 + 10^{(R_B - R_A)/400}}
 $$
 
-where $R_A$ and $R_B$ are the ELO ratings of teams $A$ and $B$ respectively. After each game, the ELO ratings are updated according to:
+where $R_A$ and $R_B$ are the Elo ratings of teams $A$ and $B$ respectively. After each game, the Elo ratings are updated according to:
 
 $$
 R_A^{new} = R_A^{old} + K \cdot (S_A - P(A \text{ beats } B))
@@ -379,7 +230,7 @@ $$
 
 where $K$ is a constant that determines how much ratings change after each game (typically set between 16 and 32), and $S_A$ is the actual outcome (1 for a win, 0 for a loss). The same update is applied symmetrically to team $B$.
 
-After thorough experimentation two additional changes were made to the traditional ELO rating system explained above. First, win-margins were taken into account to adjust the K-factor dynamically based on how decisive a victory was. This means that a team winning by a large margin would gain more ELO points than a team winning by a small margin, reflecting the dominance of the performance. Similarly, a team losing by a large margin would lose more ELO points than a team losing by a small margin. The adjusted K-factor is calculated as follows:
+After thorough experimentation two additional changes were made to the traditional Elo rating system explained above. First, win-margins were taken into account to adjust the K-factor dynamically based on how decisive a victory was. This means that a team winning by a large margin would gain more Elo points than a team winning by a small margin, reflecting the dominance of the performance. Similarly, a team losing by a large margin would lose more Elo points than a team losing by a small margin. The adjusted K-factor is calculated as follows:
 
 $$
 K_{adj} = K \cdot ln(|M| + 1)
@@ -387,17 +238,17 @@ $$
 
 where $K$ is the base K-factor (20) and $M$ is the margin of victory.
 
-Second, on season roll-overs, e.g. from the end of the 2023 season to the start of the 2024 season, all teams' ELO ratings were regressed towards the mean rating of 1,000. This was done to account for roster changes and other off-season factors that could significantly alter a team's strength from one season to the next. The regression was done as follows:
+Second, on season roll-overs, e.g. from the end of the 2023 season to the start of the 2024 season, all teams' Elo ratings were regressed towards the mean rating of 1,000. This was done to account for roster changes and other off-season factors that could significantly alter a team's strength from one season to the next. The regression was done as follows:
 
 $$
 R_{new} = R_{old} \cdot (1 - r) + 1000 \cdot r
 $$
 
-where $r$ is the regression factor (0.25) determining how much a team's rating is pulled towards the base ELO.
+where $r$ is the regression factor (0.25) determining how much a team's rating is pulled towards the base Elo.
 
 ### Team Quality {#sec:team-quality}
 
-Team quality ratings provide a statistical measure of team strength based on game outcomes, similar to how the ELO system captures relative skill. However, while ELO focuses on win probabilities through dynamic rating updates, the quality metric directly estimates each team's expected point contribution in a matchup using Generalized Linear Models (GLMs) [@nelder2018]. This approach builds on the GLM-based team strength estimation methods discussed by @habib2025, who demonstrated that combining such metrics with ELO ratings enhances model performance across multiple architectures.
+Team quality ratings provide a statistical measure of team strength based on game outcomes, similar to how the Elo system captures relative skill. However, while Elo focuses on win probabilities through dynamic rating updates, the quality metric directly estimates each team's expected point contribution in a matchup using Generalized Linear Models (GLMs) [@nelder2018]. This approach builds on the GLM-based team strength estimation methods discussed by @habib2025, who demonstrated that combining such metrics with Elo ratings enhances model performance across multiple architectures.
 
 The quality rating represents a team's strength measured in points. A positive quality indicates a team that tends to outscore opponents, while a negative quality suggests a team that typically gets outscored. The difference in quality ratings between two teams approximates the expected point margin in their matchup. For example, if team $A$ has a quality of $+15$ and team $B$ has a quality of $+5$, we would expect team $A$ to win by approximately $10$ points.
 
@@ -423,33 +274,33 @@ Quality ratings are computed separately for each season, as team rosters change 
 
 Additionally, for the data preparation process described in @sec:sliding-window-averages, quality ratings are recalculated after each game day, including all games in the window size, to ensure that the most recent team strength estimates are used when generating features for upcoming games. This dynamic updating aligns with the temporal nature of sports performance and allows the model to leverage the latest information about team capabilities.
 
-### ELO Delta Sliding Window {#sec:elo-delta-window}
+### Elo Delta Sliding Window {#sec:elo-delta-window}
 
-The ELO Delta Sliding Window feature captures the change in a team's ELO rating over a specified window of recent games, providing a measure of recent performance momentum beyond the absolute ELO rating itself. This feature is motivated by the hypothesis that a team's confidence and performance may be influenced not only by their overall strength but also by their recent trajectory and the rate of that trajectory. As shown by @kim2023, the concept of momentum in sports performance and incorporating dynamic changes in team ratings can capture psychological and performance trends that static ratings miss.
+The Elo Delta Sliding Window feature captures the change in a team's Elo rating over a specified window of recent games, providing a measure of recent performance momentum beyond the absolute Elo rating itself. This feature is motivated by the hypothesis that a team's confidence and performance may be influenced not only by their overall strength but also by their recent trajectory and the rate of that trajectory. As shown by @kim2023, the concept of momentum in sports performance and incorporating dynamic changes in team ratings can capture psychological and performance trends that static ratings miss.
 
-For each game, the ELO delta is calculated as:
+For each game, the Elo delta is calculated as:
 
 $$
 \Delta R_w = R_{\text{current}} - R_{w}
 $$
 
-where $R_{\text{current}}$ is the team's ELO rating at the current game and $R_{w}$ is their ELO rating $w$ games prior. A positive delta indicates improving performance, while a negative delta suggests declining performance. Teams with insufficient game history (fewer than $w$ games) are assigned a delta of zero, as there is no meaningful prior reference point.
+where $R_{\text{current}}$ is the team's Elo rating at the current game and $R_{w}$ is their Elo rating $w$ games prior. A positive delta indicates improving performance, while a negative delta suggests declining performance. Teams with insufficient game history (fewer than $w$ games) are assigned a delta of zero, as there is no meaningful prior reference point.
 
-To determine the optimal window size $w$ and its contribution weight $\omega$, a grid search was conducted to maximize the improvement in Brier score when incorporating the delta adjustment into ELO-based predictions. The adjusted win probability for a matchup between teams $A$ and $B$ is calculated as:
+To determine the optimal window size $w$ and its contribution weight $\omega$, a grid search was conducted to maximize the improvement in Brier score when incorporating the delta adjustment into Elo-based predictions. The adjusted win probability for a matchup between teams $A$ and $B$ is calculated as:
 
 $$
 P(A \text{ beats } B) = \frac{1}{1 + 10^{(R_B + \omega \cdot \Delta R_{B,w} - R_A - \omega \cdot \Delta R_{A,w})/400}}
 $$
 
-where $\omega$ weights the delta adjustment relative to the base ELO ratings. The grid search evaluated various combinations of window sizes and weights, selecting the pair that maximized $\text{Brier}_{\text{raw}} - \text{Brier}_{\text{adjusted}}$, where $\text{Brier}_{\text{raw}}$ represents the Brier score using only base ELO ratings and $\text{Brier}_{\text{adjusted}}$ uses the delta-enhanced predictions.
+where $\omega$ weights the delta adjustment relative to the base Elo ratings. The grid search evaluated various combinations of window sizes and weights, selecting the pair that maximized $\text{Brier}_{\text{raw}} - \text{Brier}_{\text{adjusted}}$, where $\text{Brier}_{\text{raw}}$ represents the Brier score using only base Elo ratings and $\text{Brier}_{\text{adjusted}}$ uses the delta-enhanced predictions.
 
-The optimal configuration was found to be a window size of $w = 3$ games with a weight of $\omega = 0.1$. This indicates that recent performance over the last three games provides meaningful predictive signal, though the effect is modest (weight of 0.1) compared to the base ELO ratings. This aligns with findings from @gomez2024, who discussed how temporal dynamics in rating systems can enhance predictive performance while maintaining interpretability.
+The optimal configuration was found to be a window size of $w = 3$ games with a weight of $\omega = 0.1$. This indicates that recent performance over the last three games provides meaningful predictive signal, though the effect is modest (weight of 0.1) compared to the base Elo ratings. This aligns with findings from @gomez2024, who discussed how temporal dynamics in rating systems can enhance predictive performance while maintaining interpretability.
 
-The window tracking resets between seasons by default, ensuring that a team's momentum from one season does not inappropriately carry over to the next season when rosters and team compositions have changed. This seasonal reset parallels the ELO regression approach described in @sec:elo-rating and ensures that momentum features reflect current team dynamics rather than stale historical patterns.
+The window tracking resets between seasons by default, ensuring that a team's momentum from one season does not inappropriately carry over to the next season when rosters and team compositions have changed. This seasonal reset parallels the Elo regression approach described in @sec:elo-rating and ensures that momentum features reflect current team dynamics rather than stale historical patterns.
 
 ### Win Streaks {#sec:win-streaks}
 
-Win and loss streaks represent a team's recent performance momentum, capturing the psychological and performance aspects of consecutive wins or losses that may influence future game outcomes. While the ELO delta feature in @sec:elo-delta-window tracks rating changes, win streaks provide a complementary perspective by focusing on the binary outcome sequence itself, i.e. how many games a team has won or lost in a row, independent of the margin of victory or opponent strength.
+Win and loss streaks represent a team's recent performance momentum, capturing the psychological and performance aspects of consecutive wins or losses that may influence future game outcomes. While the Elo delta feature in @sec:elo-delta-window tracks rating changes, win streaks provide a complementary perspective by focusing on the binary outcome sequence itself, i.e. how many games a team has won or lost in a row, independent of the margin of victory or opponent strength.
 
 The motivation for including win streaks as a feature stems from research on momentum effects in sports, where teams on winning streaks may exhibit increased confidence and cohesion, while teams on losing streaks may suffer from decreased morale or tactical difficulties [@kim2023]. While such psychological effects are difficult to measure directly, the streak feature provides a simple proxy that machine learning models can leverage to capture patterns where recent consecutive outcomes influence future performance beyond what absolute team strength metrics predict.
 
@@ -460,7 +311,7 @@ The streak calculation processes games in chronological order as also done in @s
 - Winning team: $\text{streak} := max(1, \text{streak} + 1)$
 - Losing team: $\text{streak} := min(-1, \text{streak} - 1)$
 
-By default, streaks reset between seasons, as team rosters change and performance from the previous season does not meaningfully continue into the new season. This seasonal reset is consistent with the temporal separation applied to other features like ELO ratings and quality metrics, ensuring that features reflect current team dynamics.
+By default, streaks reset between seasons, as team rosters change and performance from the previous season does not meaningfully continue into the new season. This seasonal reset is consistent with the temporal separation applied to other features like Elo ratings and quality metrics, ensuring that features reflect current team dynamics.
 
 ## Dataset Preparation {#sec:dataset-preparation}
 
@@ -470,9 +321,9 @@ To prepare the dataset for training the machine learning models, three different
 
 ![Data loading process for Season Averages](./images/data-loader/season_average.png){#fig:data-loader-season-average width=90%}
 
-This dataset preparation approach is inspired by the winning solution of the 2025 Kaggle competition by @odeh2025marchMLMania. It calculates the average of all box-score statistics and engineered features for each team over each entire regular season. Additionally, it calculates the average of all box-score statistics and engineered features for any team's opponents over the entire regular season. These two sets of calculated averages are then saved for every team containing its averages and its opponents' averages. 
+This dataset preparation approach is inspired by the winning solution of the 2025 Kaggle competition by @odeh2025marchMLMania. @fig:data-loader-season-average width illustrates the process of data aggregation for a given season. First, season averages of all box-score statistics and engineered features are calculated, for each team and each entire regular season. Additionally, the averages of all box-score statistics and engineered features for any team's opponents over the entire regular season are calculated. These two sets of calculated averages are then saved for every team containing its averages and its opponents' averages. 
 
-During the data-loading process for training and evaluating the machine learning models, features such as "Points Scored", "Season", "DayNum" and "Team ID" are dropped to prevent data leakage. Finally, end-of-season features such as the eventual ELO rating of a team and the Team Quality are added back, since Team Quality does not have an average and the final ELO before the tournament is the most relevant one for predicting tournament outcomes.
+During the data-loading process for training and evaluating the machine learning models, features such as "Points Scored", "Season", "DayNum" and "Team ID" are dropped to prevent data leakage. At this point, end-of-season features such as the eventual Elo rating of a team and the Team Quality are added back, since Team Quality does not have an average and the final Elo before the tournament is the most relevant one for predicting tournament outcomes.
 
 Finally, each matchup in the tournament of a given season, containing the target variable indicating the winner, is constructed by duplicating the matchup once with team A as the first team and team B as the second team and once vice versa. This is done to ensure that the machine learning models treat both teams symmetrically and do not learn any bias based on the order of the teams in the matchup. Lastly, the extracted averages for both teams are merged into the matchup data, resulting in a final dataset ready for training and evaluating the machine learning models.
 
@@ -486,7 +337,7 @@ The final dataset contains the following characteristics:
 
 ![Data loading process for Weighted Season Averages](./images/data-loader/weighted_average.png){#fig:data-loader-weighted-average width=90%}
 
-This dataset preparation approach closely resembles the one described in @sec:season-averages, but instead of calculating simple averages over the entire regular season, weighted averages are calculated where more recent games are weighted more heavily than older games. The discount factor of a given game is calculated as follows:
+This dataset preparation approach closely resembles the one described in @sec:season-averages, but instead of calculating simple averages over the entire regular season, weighted averages are calculated where more recent games are weighted more heavily than older games, as illustrated in @fig:data-loader-weighted-average. The discount factor of a given game is calculated as follows:
 
 $$
 \text{F}_{weight} = \gamma^{\text{DayNum}_{max} - \text{DayNum}_{game}}
@@ -507,9 +358,9 @@ The final dataset contains the following characteristics:
 
 ![Data loading process for Sliding Window Averages](./images/data-loader/sliding_window.png){#fig:data-loader-sliding-window width=90%}
 
-The final dataset preparation approach builds upon the weighted season averages described in @sec:weighted-season-averages, but instead of calculating weighted averages over the entire regular season, sliding window averages are calculated for every game day in chronological order, sorted by season and day number, including regular season and tournament games. This means that for each game day, the average of all box-score statistics and engineered features over a fixed window size of previous games is calculated. This allows for more dynamic feature values that can adapt to changes in team strength throughout the season.
+The final dataset preparation approach builds upon the weighted season averages described in @sec:weighted-season-averages, but instead of calculating weighted averages over the entire regular season, sliding window averages are calculated for every game day in chronological order, sorted by season and day number, including regular season and tournament games. This means that for each game day, the average of all box-score statistics and engineered features over a fixed window size of previous games is calculated. This approach is illustrated in @fig:data-loader-sliding-window and allows for more dynamic feature values that can adapt to changes in team strength throughout the season.
 
-The window size variable depending on the "DayNum" serving as predictor for the game. In every case, all games preceding the current "DayNum" in the current season are considered. Additionally, all games from the previous season with "DayNum" greater than the current "DayNum" plus the length of the NCAA tournament (22 days) are also considered, ensuring that the tournament games from the previous season are not included in the prediction of tournament games in the current season. With this approach, tournament games are predicted using the same games as in the @sec:season-averages and @sec:weighted-season-averages approaches, increasing comparability of results.
+The window size variable depending on the `DayNum` serving as predictor for the game. In every case, all games preceding the current `DayNum` in the current season are considered. Additionally, all games from the previous season with `DayNum` greater than the current `DayNum` plus the length of the NCAA March Madness tournament (22 days) are also considered, ensuring that the tournament games from the previous season are not included in the prediction of tournament games in the current season. With this approach, tournament games are predicted using the same games as in the @sec:season-averages and @sec:weighted-season-averages approaches, increasing comparability of results.
 
 The calculation of the discount factor of a given game is also adapted to the approach in @sec:weighted-season-averages to account for the sliding window and is calculated as follows:
 
@@ -517,7 +368,7 @@ $$
 \text{F}_{weight} = \gamma^{(\text{DayNum}_{game} + \text{Carry if is\_previous\_season else} 0) - \text{DayNum}_{max}}
 $$
 
-where $\gamma$ is the base discount factor (default = 0.98), $\text{DayNum}_{max}$ the maximum day number in the current window, $\text{DayNum}_{game}$ the day number of the game to be weighted, and $\text{Carry} = 40 + 154 = 194$ is a constant composed of the maximum day number of a season (154) plus a buffer (40) additionally downweighing games included from the previous season. $\text{is\_previous\_season}$ is a boolean flag indicating whether a data point is from the previous season.
+where $\gamma$ is the base discount factor (default = 0.98), $\text{DayNum}_{max}$ the maximum day number in the current window, $\text{DayNum}_{game}$ the day number of the game to be weighted, and $\text{Carry} = 40 + 154 = 194$ is a constant composed of the maximum day number of a season (154) plus a buffer (40) additionally downweighting games included from the previous season. $\text{is\_previous\_season}$ is a boolean flag indicating whether a data point is from the previous season.
 
 Finally, similar to @sec:season-averages, target matchup, containing the target variable indicating the winner, is constructed by duplicating the matchup once with team A as the first team and team B as the second team and once vice versa. These constructed matchups are then merged with the calculated sliding window averages for both teams, resulting in a final dataset ready for training and evaluating the machine learning models.
 
@@ -551,10 +402,10 @@ To validate the feature importance ranking described in @sec:feature-importance,
 \newpage
 
 # Methods
-This section describes the various modelling approaches used during the project, starting with statistical approaches to several machine learning methods.
+This section describes the various modeling approaches used during the project, starting with statistical approaches to several machine learning methods.
 
 ## Statistical Approaches {#sec:statistical-approaches}
-To establish a baseline for our machine learning approaches, we implemented several statistical approaches. All of these models were based on the entire compact regular or tourney season results described in @sec:data.
+To establish a baseline for our machine learning approaches, we implemented several statistical approaches. All of these models were based on the entire compact regular or tournament season results described in @sec:data.
 
 ### Random
 In the context of this project the random baseline considered was a prediction of a 50% win probability for each team of every matchup in the 2025 tournament. This does not take into account any data at all, and serves as the baseline of our statistical approaches.
@@ -626,7 +477,7 @@ For these classical machine learning models, an ensemble training approach was i
 At inference time, the average of the predictions by the individual model is used as the final prediction. This temporal ensemble strategy tries to counteract overfitting by only using a single season as validation data.
 
 ## Neural Networks
-As a final modelling approach, deep learning techniques were explored. The main idea was that a deep enough neural network (NN) could extract more features from the already existing ones and thus make better predictions than the classical machine learning models (@sec:classical-machine-learning-models), especially on the larger datasets (@sec:dataset-preparation).
+As a final modeling approach, deep learning techniques were explored. The main idea was that a deep enough neural network (NN) could extract more features from the already existing ones and thus make better predictions than the classical machine learning models (@sec:classical-machine-learning-models), especially on the larger datasets (@sec:dataset-preparation).
 
 To experiment with deep learning approaches, a flexible neural network architecture was implemented using PyTorch Lightning [@Falcon2019]. The neural network framework supports various architectural configurations and training strategies to predict win probabilities.
 
@@ -745,19 +596,17 @@ For example, with seasons 2003-2024 available, one model is trained with seasons
 
 # Results {#sec:results}
 
-All results described in this chapter follow the train/validation split described in @tbl:data-split-overview. The metric displayed 
-is the Brier score, which is the evaluation metric used on Kaggle. Lower Brier scores are better. Additionally, the rank achieved on 
-the Kaggle leaderboard for the respective test set is displayed. The Kaggle leaderboard contains a total of 1,727 submissions [@mmlm2025].
+All results described in this chapter follow the train/validation split described in @tbl:data-split-overview. The metric displayed is the Brier score, which is the evaluation metric used on Kaggle. Lower Brier scores are better. Additionally, the rank achieved on the Kaggle leaderboard for the respective test set is displayed. The Kaggle leaderboard contains a total of 1,727 submissions [@mmlm2025].
 
 ## Statistical Baselines {#sec:results-statistical-baselines}
 
-| Model        | Train | Validation |    Test    |  Rank   |
-|--------------|:-----:|:----------:|:----------:|:-------:|
-| Point Ratio  |   -   |   0.2484   |   0.2548   |  1,423  |
-| Random       |   -   |   0.2500   |   0.2500   |  1,272  |
-| Head-to-Head |   -   |   0.2429   |   0.2350   |  1,210  |
-| Win Ratio    |   -   |   0.2321   |   0.2284   |  1,190  |
-| Seed Ratio   |   -   | **0.1961** | **0.1766** | **948** |
+| Model        | Training | Validation |    Test    |  Rank   |
+|--------------|:--------:|:----------:|:----------:|:-------:|
+| Point Ratio  |    -     |   0.2484   |   0.2548   |  1,423  |
+| Random       |    -     |   0.2500   |   0.2500   |  1,272  |
+| Head-to-Head |    -     |   0.2429   |   0.2350   |  1,210  |
+| Win Ratio    |    -     |   0.2321   |   0.2284   |  1,190  |
+| Seed Ratio   |    -     | **0.1961** | **0.1766** | **948** |
 
 : Results Baseline Models {#tbl:results-baseline-models}
 
@@ -765,7 +614,7 @@ Among the statistical baseline models, Seed Ratio achieved the best performance 
 
 ## Season Averages {#sec:results-season-averages}
 
-| Model                           |   Train    | Validation |    Test    |  Rank   |
+| Model                           |  Training  | Validation |    Test    |  Rank   |
 |---------------------------------|:----------:|:----------:|:----------:|:-------:|
 | Support Vector Machine          |   0.1804   |   0.1533   |   0.1369   |   768   |
 | Logistic Regression             |   0.1671   |   0.1587   |   0.1191   |   288   |
@@ -780,7 +629,7 @@ Among the statistical baseline models, Seed Ratio achieved the best performance 
 
 Random Forest achieved the best test performance with a score of 0.1178 and rank 260, while also having the lowest training score of 0.1480. Neural Network achieved the best validation score of 0.1526 but ranked lower at 521st with a test score of 0.1251. Neural Network - BCE and Logistic Regression obtained test scores of 0.1189 (rank 283) and 0.1191 (rank 288) respectively, both closely matching Random Forest's performance. The CatBoost and SVM models showed the highest test scores of 0.1427 (rank 815) and 0.1369 (rank 768) respectively. All models achieved very similar validation scores, ranging from 0.1526 to 0.1587, but more varying test scores ranging from 0.1178 to 0.1427. Compared to the ensemble variants in @tbl:results-season-averages-ensembles, individual models showed better test scores, with Random Forest at 0.1178 outperforming the best ensemble Logistic Regression model at 0.1189. Relative to the statistical baselines in @tbl:results-baseline-models, all machine learning models substantially improved performance, with the worst ML model (CatBoost at 0.1427) still outperforming the best baseline (Seed Ratio at 0.1766) by 0.0339.
 
-| Model                  |   Train    | Validation |    Test    |  Rank   |
+| Model                  |  Training  | Validation |    Test    |  Rank   |
 |------------------------|:----------:|:----------:|:----------:|:-------:|
 | Support Vector Machine |   0.1627   |   0.1595   |   0.1242   |   453   |
 | Logistic Regression    |   0.1673   |   0.1603   |   0.1218   |   351   |
@@ -795,7 +644,7 @@ With default features, Neural Network achieved the best test score of 0.1181 (ra
 
 ## Season Averages Ensembles {#sec:results-season-averages-ensembles}
 
-| Model                  |   Train    | Validation |    Test    |  Rank   |
+| Model                  |  Training  | Validation |    Test    |  Rank   |
 |------------------------|:----------:|:----------:|:----------:|:-------:|
 | Logistic Regression    |   0.1668   | **0.1676** | **0.1189** | **283** |
 | Random Forest          | **0.1473** |   0.1684   |   0.1232   |   401   |
@@ -806,7 +655,7 @@ With default features, Neural Network achieved the best test score of 0.1181 (ra
 
 In the ensemble experiments, Logistic Regression achieved the best test score of 0.1189 (rank 283) and best validation score of 0.1676. CatBoost obtained 0.1208 on test (rank 326), followed by XGBoost at 0.1213 (rank 335). Random Forest showed the lowest training score of 0.1473 but achieved 0.1232 on test (rank 401). All ensemble models showed validation and test scores clustered between 0.1676 and 0.1684. and 0.1189 and 0.1232 respectively, therefore exhibiting less variance compared to individual models in @tbl:results-season-averages. Compared to individual models in @tbl:results-season-averages, ensemble XGBoost (0.1213) and CatBoost (0.1208) outperformed their individual counterparts (0.1234 and 0.1427 respectively), while the other models performed slightly worse.
 
-| Model                  |   Train    | Validation |    Test    |  Rank   |
+| Model                  |  Training  | Validation |    Test    |  Rank   |
 |------------------------|:----------:|:----------:|:----------:|:-------:|
 | Logistic Regression    |   0.1658   | **0.1674** |   0.1186   |   278   |
 | Random Forest          |   0.1531   |   0.1685   | **0.1171** | **245** |
@@ -819,7 +668,7 @@ With default features, Random Forest achieved the best test score of 0.1171 (ran
 
 ## Weighted Season Averages {#sec:results-weighted-season-averages}
 
-| Model                             |   Train    | Validation |    Test    |  Rank   |
+| Model                             |  Training  | Validation |    Test    |  Rank   |
 |-----------------------------------|:----------:|:----------:|:----------:|:-------:|
 | Logistic Regression               |   0.1520   |   0.1520   |   0.1232   |   401   |
 | Random Forest                     |   0.1508   |   0.1550   |   0.1204   |   316   |
@@ -836,7 +685,7 @@ CatBoost achieved the best test score of 0.1171 (rank 245) and lowest training s
 
 ## Sliding Window Averages {#sec:results-sliding-window-averages}
 
-| Model                             |   Train    | Validation |    Test    |  Rank   |
+| Model                             |  Training  | Validation |    Test    |  Rank   |
 |-----------------------------------|:----------:|:----------:|:----------:|:-------:|
 | Logistic Regression               |   0.1763   |   0.1773   |   0.1185   |   274   |
 | Random Forest                     | **0.1650** |   0.1785   |   0.1228   |   386   |
@@ -851,58 +700,49 @@ CatBoost achieved the best test score of 0.1171 (rank 245) and lowest training s
 
 XGBoost achieved the best test score of 0.1168 (rank 238), representing the best performance across all experiments conducted. Neural Network - BCE obtained 0.1171 on test (rank 245), matching the top scores from @tbl:results-season-averages-ensembles-default-features and @tbl:results-weighted-season-averages. This also represents the best performing neural network of the project, consisting of 3 hidden layers, with widths 128, 64, and 32 and GELU [@DBLP:journals/corr/HendrycksG16] as activation function inbetween. Random Forest showed the lowest training score of 0.1650 but achieved 0.1228 on test (rank 386). Neural Network - BCE + Entropy demonstrated the highest training and validation scores of 0.2215 and 0.2221 respectively, with a test score of 0.1230 (rank 393). All models except Neural Network - BCE + Entropy showed closely clustered validation scores between 0.1771 and 0.1785. Compared to Season Averages models in @tbl:results-season-averages, XGBoost improved from 0.1234 to 0.1168, demonstrating the value of sliding window features over season-averaged statistics. The XGBoost model's rank of 238 represents the highest achieved ranking among all experiments, beating the best models of both ensemble methods and weighted averaging strategies.
 
+
+## Neural Network Accuracy {#sec:results-neural-network-accuracy}
+
+In @tbl:results-neural-network-accuracy, the accuracy of the neural network models across different data preparation methods is presented, making the results comparable to existing research, where accuracy is often reported. The highest accuracy of 77.5% was achieved by the Neural Network - BCE model using Weighted Season Averages, which also had the lowest Brier score of 0.1513. The accuracy of the best Neural Network model on the validation data (Sliding Window Averages with BCE loss) was 72.6%, with a Brier score of 0.1771. This discrepancy between the highest accuracy and best model performance stems from the fact that the test data is not available and therefore accuracy cannot be calculated on it directly. Instead, both accuracy and Brier score displayed in the table are calculated on the validation set.
+
+| Model                             |     Data Preparation     | Brier score | Accuracy [%] |
+|-----------------------------------|:------------------------:|:-----------:|:------------:|
+| Neural Network                    |     Season Averages      |   0.1526    |     76.1     |
+| Neural Network - Default Features |     Season Averages      |   0.1538    |     75.7     |
+| Neural Network - BCE              |     Season Averages      |   0.1561    |     75.3     |
+| Neural Network - BCE + Entropy    |     Season Averages      |   0.1551    |     77.2     |
+| Neural Network                    | Weighted Season Averages |   0.1526    |     77.2     |
+| Neural Network - Default Features | Weighted Season Averages |   0.1530    |     77.3     |
+| Neural Network - BCE              | Weighted Season Averages | **0.1513**  |   **77.5**   |
+| Neural Network - BCE + Entropy    | Weighted Season Averages |   0.1855    |     77.1     |
+| Neural Network                    | Sliding Window Averages  |   0.1772    |     72.7     |
+| Neural Network - Default Features | Sliding Window Averages  |   0.1784    |     72.5     |
+| Neural Network - BCE              | Sliding Window Averages  |  *0.1771*   |    *72.6*    |
+| Neural Network - BCE + Entropy    | Sliding Window Averages  |   0.2221    |     72.3     |
+
+: Neural Network Accuracy Results {#tbl:results-neural-network-accuracy}
+
 \newpage
 
 # Discussion {#sec:discussion}
 
-Throughout the presentation of our results in @sec:results, it becomes apparent that the combination of data preparation strategies 
-and model architecture selection has significant influence on predictive performance in the context of NCAA tournament outcome prediction, while model complexity itself 
-is almost negligible, supporting @kim2023's finding of narrow performance ranges (61-67% accuracy) across different architectures. 
-Our best performing model, a combination of XGBoost architecture and Sliding Window Averages (@tbl:results-sliding-window-averages), 
-achieved a Brier score of 0.1168 (rank 238), which outperformed all instances of more complex neural network architectures (best NN-BCE at 0.1171, rank 245). 
-This contradicts the common assumption that increasingly sophisticated models yield proportionally better predictions, 
-instead supporting @lopez2015's conclusion that "modest statistical methods with informative data can meet or exceed the accuracy of more complex models."
+Throughout the presentation of our results in @sec:results, it becomes apparent that the choice of data preparation strategies has significant influence on predictive performance in the context of NCAA March Madness tournament outcome prediction, while model complexity itself is almost negligible, supporting @kim2023's finding of narrow performance ranges (61-67% accuracy) across different architectures.
 
-The impact of different data loading approaches emerges as the most significant factor in our experiments. Our Sliding Window Averages method consistently 
-outperformed both Weighed Season Averages and Season Averages, which was inspired by the Kaggle competition winning solution by @odeh2025marchMLMania. 
-XGBoost improved from 0.1234 (Season Averages) to 0.1168 
-(Sliding Window), and Neural Network-BCE from 0.1189 to 0.1171, demonstrating that the expansion of the underlying training and test data by a factor of around 400 
-and data aggregation taking temporal dynamics into account increases predictive accuracy, suggesting that our approach 
-captures performance dynamics that season-wide averaging obscures. This finding aligns with @gomez2024's emphasis on temporal 
-dynamics in rating systems, though our implementation also included sliding window averages over raw box-score statistics rather 
-than rating updates alone. 
+While we only reported model accuracy for neural networks in @tbl:results-neural-network-accuracy, and the values reported there must be interpreted with caution due to their calculation on validation data only, the ranges of values per data preparation method are very narrow, further supporting that model choice has limited impact on performance. Furthermore, with our best neural network on the test set (BCE with Sliding Window Averages) reaching a validation set accuracy of 72.7%, performance is comparable to results reported by @kim2023 (61% - 67%), @shen2016 (63% - 68%), and @habib2025 (73%), highlighting the validity of our approaches.
 
-Surprisingly, the Weighted Season Averages approach, which used to same aggregated features to predict both regular season and 
-tournament games for a given season, achieved competitive results despite the questionable validity of predicting past regular 
-season games using features partially derived from games later in the same season. Further investigation is needed to understand why this data leakage did not 
-impair performance, potentially indicating that the models effectively ignored temporally inconsistent features.
+Our best performing model, a combination of XGBoost architecture and Sliding Window Averages (@tbl:results-sliding-window-averages), achieved a Brier score of 0.1168 (rank 238), which outperformed all instances of more complex neural network architectures (best NN-BCE at 0.1171, rank 245). This contradicts the common assumption that increasingly sophisticated models yield proportionally better predictions, instead supporting @lopez2015's conclusion that "modest statistical methods with informative data can meet or exceed the accuracy of more complex models."
 
-Counter to expectations established by @yuan2015's mixture-of-modelers success and @habib2025's ensemble approaches, our 
-ensemble strategy (@sec:ensemble-training-strategy) produced mixed results; though our ensembles were limited to using multiple instances 
-of the same model type trained on different seasons, rather than combining diverse architectures. 
-While XGBoost and CatBoost models showed improvements in ensemble configuration over their individual counterparts (0.1213 vs. 0.1234 and 0.1208 vs. 0.1427 respectively), 
-all other models declined in performance. Across all ensemble models, however, the variance between validation and test scores was lower compared to 
-individual models, suggesting improved generalization capacity. However, this enhanced stability did not translate to superior leaderboard performance, 
-indicating that the prediction of tournament outcomes may reward riskier individual models over conservative, but more stable ensemble predictions.
+The impact of different data loading approaches emerges as the most significant factor in our experiments. Our Sliding Window Averages method consistently outperformed both Weighed Season Averages and Season Averages, which was inspired by the Kaggle competition winning solution by @odeh2025marchMLMania. XGBoost improved from 0.1234 (Season Averages) to 0.1168 (Sliding Window), and Neural Network-BCE from 0.1189 to 0.1171, demonstrating that the expansion of the underlying training and test data by a factor of around 400 and data aggregation taking temporal dynamics into account increases predictive accuracy, suggesting that our approach captures performance dynamics that season-wide averaging obscures. This finding aligns with @gomez2024's emphasis on temporal dynamics in rating systems, though our implementation also included sliding window averages over raw box-score statistics rather than rating updates alone. 
 
-Our results reveal an apparent performance ceiling across all approaches, with validation Brier scores consistently stagnating around 
-0.15 and test Brier scores around 0.12 regardless of model choice and only differing slightly due to the data preparation method chosen. 
-Even our best model (Brier score 0.1168) is clearly outperformed by 
-the competition's top scores (1st place Brier score of 0.1041 [@odeh2025marchMLMania]), suggesting fundamental limits to tournament predictability using team-level aggregated statistics. 
-This ceiling may reflect the "inherent unpredictability of tournament play" that motivates @mciver2025's documentation of zero perfect brackets in history.
+Surprisingly, the Weighted Season Averages approach, which used to same aggregated features to predict both regular season and tournament games for a given season, achieved competitive results despite the questionable validity of predicting past regular season games using features partially derived from games later in the same season. Further investigation is needed to understand why this data leakage did not impair performance, potentially indicating that the models effectively ignored temporally inconsistent features.
 
-Feature engineering proved critically important, consistent with @habib2025's emphasis on sophisticated feature construction. 
-The default features experiments, using an intersection of features from the winning solution and our data preparation approaches, 
-generally achieved comparable or superior performance to ranked features from sec:feature-importance, particularly evident in the ensemble experiments 
-where Random Forest with default features achieved 0.1171 versus 0.1232 with ranked features (@tbl:results-season-averages-ensembles-default-features). 
-This suggests that domain-informed feature selection may be more effective than data-driven feature ranking.
+Counter to expectations established by @yuan2015's mixture-of-modelers success and @habib2025's ensemble approaches, our ensemble strategy (@sec:ensemble-training-strategy) produced mixed results; though our ensembles were limited to using multiple instances of the same model type trained on different seasons, rather than combining diverse architectures. While XGBoost and CatBoost models showed improvements in ensemble configuration over their individual counterparts (0.1213 vs. 0.1234 and 0.1208 vs. 0.1427 respectively), all other models declined in performance. Across all ensemble models, however, the variance between validation and test scores was lower compared to individual models, suggesting improved generalization capacity. However, this enhanced stability did not translate to superior leaderboard performance, indicating that the prediction of tournament outcomes may reward riskier individual models over conservative, but more stable ensemble predictions.
 
-A significant limitation of our approach lies in the direct comparison with the Kaggle leaderboard. Unlike top-performing solutions that 
-manually adjusted predictions based on tournament structure or betting market information, we maintained a purely data-driven approach without post-processing. 
-Our custom BCE with entropy penalty loss function (@sec:loss-functions), designed to encourage confident predictions similar to manual post-processing, 
-failed to improve performance (0.1221 test score), demonstrating that algorithmic attempts to replicate these manual adjustments cannot substitute for genuine domain expertise. 
-This "scientifically pure" approach, while methodologically rigorous, may have handicapped our competitive performance relative to pragmatic solutions 
-that leverage additional information sources.
+Our results reveal an apparent performance ceiling across all approaches, with validation Brier scores consistently stagnating around 0.15 and test Brier scores around 0.12 regardless of model choice and only differing slightly due to the data preparation method chosen. Even our best model (Brier score 0.1168) is clearly outperformed by the competition's top scores (1st place Brier score of 0.1041 [@odeh2025marchMLMania]), suggesting fundamental limits to tournament predictability using team-level aggregated statistics. This ceiling may reflect the "inherent unpredictability of tournament play" that motivates @mciver2025's documentation of zero perfect brackets in history.
+
+Feature engineering proved critically important, consistent with @habib2025's emphasis on sophisticated feature construction. The default features experiments, using an intersection of features from the winning solution and our data preparation approaches, generally achieved comparable or superior performance to ranked features from sec:feature-importance, particularly evident in the ensemble experiments where Random Forest with default features achieved 0.1171 versus 0.1232 with ranked features (@tbl:results-season-averages-ensembles-default-features). This suggests that domain-informed feature selection may be more effective than data-driven feature ranking.
+
+A significant limitation of our approach lies in the direct comparison with the Kaggle leaderboard. Unlike top-performing solutions that manually adjusted predictions based on tournament structure or betting market information, we maintained a purely data-driven approach without post-processing. Our custom BCE with entropy penalty loss function (@sec:loss-functions), designed to encourage confident predictions similar to manual post-processing, failed to improve performance (0.1221 test score), demonstrating that algorithmic attempts to replicate these manual adjustments cannot substitute for genuine domain expertise. This "scientifically pure" approach, while methodologically rigorous, may have handicapped our competitive performance relative to pragmatic solutions that leverage additional information sources.
 
 \newpage
 
@@ -911,11 +751,11 @@ This project systematically investigated the prediction of NCAA Division I baske
 
 Analysis of results reveals (excluding the neural network with BCE + entropy penalty) that performance varies only marginally across different model types. This is demonstrated by the narrow range in Brier scores across all models of the same experiment type. Season Averages experiments show validation Brier scores ranging from 0.1526 to 0.1603 (difference of 0.0077) and test Brier scores ranging from 0.1178 to 0.1427 (difference of 0.0249). This pattern appears even more pronounced in the Season Averages Ensemble experiments, with validation Brier scores from 0.1674 to 0.1685 (difference of 0.0011) and test Brier scores from 0.1189 to 0.1232 (difference of 0.0043). The validation Brier scores of the Weighted Season Averages experiments range from 0.1513 to 0.1550 (difference of 0.0037) and test Brier scores from 0.1171 to 0.1247 (difference of 0.0076). Finally, the Sliding Window Averages experiments show validation scores ranging from 0.1771 to 0.1785 (difference of 0.0014), while test Brier scores range from 0.1168 to 0.1228 (difference of 0.006). Based on this, we conclude that the choice of data preparation strategy and the data itself are more important than model type in the context of this particular problem.
 
-Our results reveal that performance reached a plateau early in experimentation, with further improvements proving difficult to achieve. Tying back to the previous observation, performance gains were realized primarily through different data preparation strategies, and even these improvements remained modest. We think this plateau stems from an inherent unpredictability in sports tournaments, as supported by @mciver2025's observation that no perfect NCAA tournament bracket has ever been recorded. The observed upset rates in @fig:seed-upsets of 27.6% for men and 21.1% for women also support this claim. These inverse of these rates (games that were no upset) align closely with the accuracy of our best neural network models in @tbl:results-sliding-window-averages, suggesting that we may be approaching the limit of what can be achieved with the available data.
+Our results reveal that performance reached a plateau early in experimentation, with further improvements proving difficult to achieve. Tying back to the previous observation, performance gains were realized primarily through different data preparation strategies, and even these improvements remained modest. We think this plateau stems from an inherent unpredictability in sports tournaments, as supported by @mciver2025's observation that no perfect NCAA March Madness tournament bracket has ever been recorded. The observed upset rates in @fig:seed-upsets of 27.6% for men and 21.1% for women also support this claim. These inverse of these rates (games that were no upset) align closely with the accuracy of our best neural network models in @tbl:results-sliding-window-averages, suggesting that we may be approaching the limit of what can be achieved with the available data.
 
 While previous work often focused on single approaches (pure statistical, classical ML, or deep learning), we tried to systematically compare these approaches using identical feature sets and evaluation workflows, incorporating temporal ensemble strategies [@yuan2015], extensive feature engineering [@kim2023], and dynamic rating principles [@kvam2006; @constantinou2013]. By demonstrating that these approaches - whether models, feature engineering, or data preparation strategies - can be effectively applied to NCAA basketball, we suggest that these approaches could be extrapolated to other sports prediction problems of similar nature, like for example football or tennis tournaments.
 
-Comparison with the Kaggle competition leaderboard reveals that our best result (rank 238) remains distant from top-performing solutions (rank 1 with a Brier score of 0.1041 [@odeh2025marchMLMania]). The main difference between our approach and top-performing solutions lies in the inclusion of betting market odds and manual adjustment of predictions. This gap suggests that the plateau observed in our results may represent the limit of what can be achieved with historical game statistics in the forms applied by us.
+Comparison with the Kaggle competition leaderboard reveals that our best result (rank 238) remains distant from top-performing solutions (rank 1 with a Brier score of 0.1041 [@odeh2025marchMLMania]). The main difference between our approach and top-performing solutions lies in the inclusion of betting market odds and manual adjustment of predictions. This gap suggests that the plateau observed in our results may represent the limit of what can be achieved with historical game statistics with the approaches presented.
 
 In summary, this project demonstrates that NCAA basketball tournament prediction is both feasible and fundamentally constrained. Competitive predictions can be achieved through careful feature engineering and data preparation with relatively simple models, yet the inherent unpredictability of tournament basketball establishes a performance ceiling. These models could serve as baselines for predictions that could subsequently be enhanced through expert knowledge. While this work focused on basketball, the approaches employed here seem applicable to other structurally similar sports predictions.
 
