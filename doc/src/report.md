@@ -849,7 +849,7 @@ CatBoost achieved the best test score of 0.1171 (rank 245) and lowest training s
 
 : Results Sliding Window Averages {#tbl:results-sliding-window-averages}
 
-XGBoost achieved the best test score of 0.1168 (rank 238), representing the best performance across all experiments conducted. Neural Network - BCE obtained 0.1171 on test (rank 245), matching the top scores from @tbl:results-season-averages-ensembles-default-features and @tbl:results-weighted-season-averages. Random Forest showed the lowest training score of 0.1650 but achieved 0.1228 on test (rank 386). Neural Network - BCE + Entropy demonstrated the highest training and validation scores of 0.2215 and 0.2221 respectively, with a test score of 0.1230 (rank 393). All models except Neural Network - BCE + Entropy showed closely clustered validation scores between 0.1771 and 0.1785. Compared to Season Averages models in @tbl:results-season-averages, XGBoost improved from 0.1234 to 0.1168, demonstrating the value of sliding window features over season-averaged statistics. The XGBoost model's rank of 238 represents the highest achieved ranking among all experiments, beating the best models of both ensemble methods and weighted averaging strategies.
+XGBoost achieved the best test score of 0.1168 (rank 238), representing the best performance across all experiments conducted. Neural Network - BCE obtained 0.1171 on test (rank 245), matching the top scores from @tbl:results-season-averages-ensembles-default-features and @tbl:results-weighted-season-averages. This also represents the best performing neural network of the project, consisting of 3 hidden layers, with widths 128, 64, and 32 and GELU [@DBLP:journals/corr/HendrycksG16] as activation function inbetween. Random Forest showed the lowest training score of 0.1650 but achieved 0.1228 on test (rank 386). Neural Network - BCE + Entropy demonstrated the highest training and validation scores of 0.2215 and 0.2221 respectively, with a test score of 0.1230 (rank 393). All models except Neural Network - BCE + Entropy showed closely clustered validation scores between 0.1771 and 0.1785. Compared to Season Averages models in @tbl:results-season-averages, XGBoost improved from 0.1234 to 0.1168, demonstrating the value of sliding window features over season-averaged statistics. The XGBoost model's rank of 238 represents the highest achieved ranking among all experiments, beating the best models of both ensemble methods and weighted averaging strategies.
 
 \newpage
 
@@ -924,7 +924,7 @@ One opportunity to improve the approaches explored in this project is how the da
 
 Another aspect that could be explored is different sources of data. One specific example would be to base predictions on the performance of individual players within each team, rather than on the team overall.
 
-## Lessons Learned
+## Lessons Learned & Reflection
 Overall, this project was a very good opportunity to apply the knowledge we acquired at the university so far. In contrast to previous projects, we had the necessary knowledge in most of the important parts of an AI/ML project (like machine learning methods, experiment tracking, AI/ML project workflow) at the start of the project, allowing for a shift in focus on different methods, their advantages and drawbacks, without having to learn new tools first.
 
 Due to this we were able to experiment with more different models than we were used to. This forced us to spend more time on software engineering, to let us run the quite substantial count of experiments, track their results in a unified and comparable way and iterate this process in search for better results.
@@ -936,6 +936,8 @@ Similarly, we noticed that achieving initial, respectable results is quite easy,
 Once again, we were reminded of the importance of preliminary data analysis, where a crucial understanding for the data we work with is developed. From there the engineering of insight- and meaningful features carries the entire project, as we clearly saw in this project. While analysing the data is important at the start of a project, it can be just as important to help understand the results and limitations of your work.
 
 We've also seen, that data quality and well engineered features contribute a lot more to the success of such a project, than sheer data quantity. While the results of our larger datasets did improve the performance, is was only marginal.
+
+Concluding this section with a more personal note, we both enjoyed the team work on this project. Apart from discussing on eye-level which lead to progress in the project and mutual learning, we were able to distribute tasks according to our strengths and preferences, which lead to an efficient workflow. Thanks to frequent and open communication we were able to avoid misunderstandings and set clear expectations of our project tasks and goals. All of this contributed to a focused, yet enjoyable working experience.
 
 \newpage
 
